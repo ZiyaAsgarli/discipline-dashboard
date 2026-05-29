@@ -189,6 +189,38 @@ export default function Home() {
       .filter((checkin) => checkin.completed)
       .map((checkin) => checkin.campaign_day),
   );
+  const completedCampaignDays = Array.from(completedCheckinDays).sort(
+    (firstDay, secondDay) => firstDay - secondDay,
+  );
+  let currentStreak = 0;
+  let longestStreak = 0;
+  let runningStreak = 0;
+
+  if (completedCampaignDays.length > 0) {
+    const latestCompletedDay =
+      completedCampaignDays[completedCampaignDays.length - 1];
+
+    for (let day = latestCompletedDay; completedCheckinDays.has(day); day--) {
+      currentStreak += 1;
+    }
+
+    completedCampaignDays.forEach((day, index) => {
+      if (index > 0 && day === completedCampaignDays[index - 1] + 1) {
+        runningStreak += 1;
+      } else {
+        runningStreak = 1;
+      }
+
+      longestStreak = Math.max(longestStreak, runningStreak);
+    });
+  }
+
+  const currentStreakLabel = `${currentStreak} ${
+    currentStreak === 1 ? "day" : "days"
+  }`;
+  const longestStreakLabel = `${longestStreak} ${
+    longestStreak === 1 ? "day" : "days"
+  }`;
   const activeTasksCount = strategicTasks.filter(
     (task) => task.status === "active",
   ).length;
@@ -247,6 +279,16 @@ export default function Home() {
       label: "XP Events",
       value: xpEventsLoading ? "Loading..." : `${xpEventsCount}`,
       detail: "All recorded activity",
+    },
+    {
+      label: "Current Streak",
+      value: dailyCheckinsLoading ? "Loading..." : currentStreakLabel,
+      detail: "Latest completed run",
+    },
+    {
+      label: "Longest Streak",
+      value: dailyCheckinsLoading ? "Loading..." : longestStreakLabel,
+      detail: "Best campaign run",
     },
     {
       label: "Completed Tasks",
@@ -1442,7 +1484,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
               {analyticsSummary.map((metric) => (
                 <article
                   className="rounded-lg border border-white/10 bg-[#14161c] p-4"
