@@ -1295,6 +1295,9 @@ export default function Home() {
             Sign in or create an account to unlock your personal RPG discipline
             dashboard.
           </p>
+          <p className="mt-3 rounded-md border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-6 text-zinc-400">
+            Use email and password to access your personal dashboard.
+          </p>
 
           <div className="mt-6 space-y-4">
             <label className="block">
@@ -1352,7 +1355,9 @@ export default function Home() {
           </div>
 
           {authChecking ? (
-            <p className="mt-5 text-sm text-zinc-500">Checking session...</p>
+            <p className="mt-5 text-sm text-zinc-500">
+              Checking your session...
+            </p>
           ) : null}
         </section>
       </main>
@@ -1371,7 +1376,9 @@ export default function Home() {
               Discipline Dashboard
             </h1>
             <p className="mt-3 text-sm font-medium text-[#baffd2]">
-              {profileLoading ? "Loading profile..." : `Welcome back, ${displayName}`}
+              {profileLoading
+                ? "Loading profile data..."
+                : `Welcome back, ${displayName}`}
             </p>
             {profileError ? (
               <p className="mt-2 text-sm text-rose-200">{profileError}</p>
@@ -1484,6 +1491,9 @@ export default function Home() {
                 <h2 className="mt-2 text-2xl font-semibold text-white">
                   180-Day Discipline Grid
                 </h2>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-500">
+                  Each green cell represents a completed discipline day.
+                </p>
               </div>
               <div className="flex flex-col gap-3 sm:items-end">
                 <button
@@ -1581,7 +1591,7 @@ export default function Home() {
                 <div className="mt-5 space-y-3">
                   {xpEventsLoading ? (
                     <div className="rounded-md border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-400">
-                      Loading XP activity...
+                      Loading recent XP activity...
                     </div>
                   ) : null}
 
@@ -1594,8 +1604,14 @@ export default function Home() {
                   {!xpEventsLoading &&
                   !xpEventsError &&
                   xpEvents.length === 0 ? (
-                    <div className="rounded-md border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-400">
-                      No XP activity yet.
+                    <div className="rounded-md border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-zinc-400">
+                      <p className="font-medium text-zinc-300">
+                        No XP activity yet.
+                      </p>
+                      <p className="mt-1 text-zinc-500">
+                        Complete a daily check-in or strategic task to start
+                        building your XP history.
+                      </p>
                     </div>
                   ) : null}
 
@@ -1749,7 +1765,12 @@ export default function Home() {
                 !strategicTasksError &&
                 filteredStrategicTasks.length === 0 ? (
                   <div className="rounded-lg border border-white/10 bg-[#14161c] p-5 text-sm leading-6 text-zinc-400">
-                    No tasks match this filter yet.
+                    <p className="font-medium text-zinc-300">
+                      No tasks in this status yet.
+                    </p>
+                    <p className="mt-1 text-zinc-500">
+                      Create a strategic task to turn long-term goals into XP.
+                    </p>
                   </div>
                 ) : null}
 
