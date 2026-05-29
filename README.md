@@ -1,20 +1,40 @@
 # Discipline Dashboard — RPG-Based Career & Discipline Tracking System
 
-A personal full-stack dashboard built to track daily discipline, career growth, XP progression, and strategic long-term goals.
+A full-stack personal operating system for tracking daily discipline, strategic career goals, XP progression, and analytics-backed growth.
 
-## Portfolio Documentation
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Portfolio Project](https://img.shields.io/badge/Portfolio_Project-22C55E?style=for-the-badge)
+
+## Live Demo
+
+Live Demo: [\[Add Vercel URL here\]](https://discipline-dashboard-iota.vercel.app/)
+
+GitHub: [\[Add GitHub repository URL here\]](https://github.com/ZiyaAsgarli/discipline-dashboard)
+
+## Quick Links
 
 This repository is structured not only as a working application, but also as a portfolio-ready engineering case study.
 
-- [CASE_STUDY.md](./CASE_STUDY.md) - full engineering case study
-- [DEMO_SCRIPT.md](./DEMO_SCRIPT.md) - interview demo script
-- [DATABASE_PLAN.md](./DATABASE_PLAN.md) - database planning document
-- [supabase/schema.sql](./supabase/schema.sql) - initial database schema
-- [supabase/rls_policies.sql](./supabase/rls_policies.sql) - Row Level Security policies
+- [Engineering Case Study](./CASE_STUDY.md)
+- [Interview Demo Script](./DEMO_SCRIPT.md)
+- [Database Plan](./DATABASE_PLAN.md)
+- [SQL Schema](./supabase/schema.sql)
+- [RLS Policies](./supabase/rls_policies.sql)
 
-## Engineering Case Study
+## Project Highlights
 
-A full engineering case study is available in [CASE_STUDY.md](./CASE_STUDY.md), covering the product problem, architecture, database design, security model, gamification logic, analytics layer, and future roadmap.
+- Secure user-specific authentication
+- 180-day discipline grid
+- RPG XP and level system
+- Strategic task management
+- XP audit trail
+- Analytics summary cards
+- Free-tier deployment architecture
 
 ## Why This Project Exists
 
