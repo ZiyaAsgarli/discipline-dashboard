@@ -2,6 +2,10 @@
 
 A personal full-stack dashboard built to track daily discipline, career growth, XP progression, and strategic long-term goals.
 
+## Engineering Case Study
+
+A full engineering case study is available in [CASE_STUDY.md](./CASE_STUDY.md), covering the product problem, architecture, database design, security model, gamification logic, analytics layer, and future roadmap.
+
 ## Why This Project Exists
 
 Discipline Dashboard is designed as both a personal operating system and a professional portfolio project.
