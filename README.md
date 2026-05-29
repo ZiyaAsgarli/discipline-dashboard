@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Discipline Dashboard — RPG-Based Career & Discipline Tracking System
 
-## Getting Started
+A personal full-stack dashboard built to track daily discipline, career growth, XP progression, and strategic long-term goals.
 
-First, run the development server:
+## Why This Project Exists
+
+Discipline Dashboard is designed as both a personal operating system and a professional portfolio project.
+
+- Personal discipline system for tracking consistency over a 180-day campaign
+- Career transition support into Data Analytics / BI
+- Full-stack portfolio project for corporate interviews
+
+## Tech Stack
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+- Supabase Auth
+- Supabase PostgreSQL
+- Row Level Security
+- Vercel-ready frontend
+- Supabase free-tier backend/database
+
+## Core Features
+
+- Email/password authentication
+- User profile system
+- 180-Day Discipline Grid
+- Daily Complete Today check-in
+- XP rewards
+- RPG level system
+- Dynamic level titles
+- Strategic Tasks Manager
+- Task completion with XP rewards
+- XP event audit trail
+- Recent XP Activity feed
+- Analytics Summary cards
+- User-specific Row Level Security
+
+## Database Tables
+
+The planned Supabase PostgreSQL schema uses these core tables:
+
+- `profiles`
+- `daily_checkins`
+- `xp_events`
+- `strategic_tasks`
+
+## XP Logic
+
+- Daily check-in = `100 XP`
+- Strategic task XP reward is configurable
+- Level formula:
+
+```text
+Level = floor(total_xp / 1000) + 1
+```
+
+## Local Setup
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create a local environment file:
+
+```bash
+.env.local
+```
+
+Add Supabase environment variables:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+## Environment Variables
+
+Required local environment variables:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open the app:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deployment Plan
 
-## Learn More
+- Frontend: Vercel
+- Database/Auth: Supabase
+- Optional future backend: Render.com
 
-To learn more about Next.js, take a look at the following resources:
+## Future Roadmap
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Task edit/delete/archive
+- Better charts
+- Monthly analytics
+- Power BI export or reporting layer
+- Public portfolio case study page
