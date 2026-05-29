@@ -2,6 +2,16 @@
 
 A personal full-stack dashboard built to track daily discipline, career growth, XP progression, and strategic long-term goals.
 
+## Portfolio Documentation
+
+This repository is structured not only as a working application, but also as a portfolio-ready engineering case study.
+
+- [CASE_STUDY.md](./CASE_STUDY.md) - full engineering case study
+- [DEMO_SCRIPT.md](./DEMO_SCRIPT.md) - interview demo script
+- [DATABASE_PLAN.md](./DATABASE_PLAN.md) - database planning document
+- [supabase/schema.sql](./supabase/schema.sql) - initial database schema
+- [supabase/rls_policies.sql](./supabase/rls_policies.sql) - Row Level Security policies
+
 ## Engineering Case Study
 
 A full engineering case study is available in [CASE_STUDY.md](./CASE_STUDY.md), covering the product problem, architecture, database design, security model, gamification logic, analytics layer, and future roadmap.
