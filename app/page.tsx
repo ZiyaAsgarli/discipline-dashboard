@@ -31,6 +31,8 @@ type StrategicTask = {
   created_at: string;
 };
 
+type TaskFilter = "all" | StrategicTask["status"];
+
 type XpEvent = {
   id: string;
   description: string | null;
@@ -162,6 +164,9 @@ export default function Home() {
   const [taskXpReward, setTaskXpReward] = useState("250");
   const [taskFormLoading, setTaskFormLoading] = useState(false);
   const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
+  const [taskActionId, setTaskActionId] = useState<string | null>(null);
+  const [selectedTaskFilter, setSelectedTaskFilter] =
+    useState<TaskFilter>("active");
   const [taskFormMessage, setTaskFormMessage] = useState("");
   const [taskFormMessageType, setTaskFormMessageType] = useState<
     "success" | "error" | "info"
@@ -191,6 +196,17 @@ export default function Home() {
     (task) => task.status === "completed",
   ).length;
   const completionRate = Math.round((completedCheckinsCount / 180) * 100);
+  const filteredStrategicTasks =
+    selectedTaskFilter === "all"
+      ? strategicTasks
+      : strategicTasks.filter((task) => task.status === selectedTaskFilter);
+  const taskFilters: Array<{ label: string; value: TaskFilter }> = [
+    { label: "All", value: "all" },
+    { label: "Active", value: "active" },
+    { label: "Completed", value: "completed" },
+    { label: "Paused", value: "paused" },
+    { label: "Archived", value: "archived" },
+  ];
 
   const stats = [
     {
@@ -1137,6 +1153,121 @@ export default function Home() {
     }
   }
 
+  async function refreshStrategicTasks(userId: string) {
+    setStrategicTasksLoading(true);
+
+    try {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("strategic_tasks")
+        .select(
+          "id, title, description, category, priority, status, xp_reward, created_at",
+        )
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .returns<StrategicTask[]>();
+
+      if (error) {
+        throw error;
+      }
+
+      setStrategicTasks(data ?? []);
+      setStrategicTasksError("");
+    } catch (error) {
+      setStrategicTasks([]);
+      setStrategicTasksError("Unable to load strategic tasks.");
+      throw error;
+    } finally {
+      setStrategicTasksLoading(false);
+    }
+  }
+
+  async function handleUpdateTaskStatus(
+    task: StrategicTask,
+    status: StrategicTask["status"],
+  ) {
+    setTaskFormMessage("");
+
+    if (!user) {
+      setTaskFormMessageType("error");
+      setTaskFormMessage("Please sign in before managing strategic tasks.");
+      return;
+    }
+
+    setTaskActionId(`${status}:${task.id}`);
+
+    try {
+      const supabase = await getSupabase();
+      const { error } = await supabase
+        .from("strategic_tasks")
+        .update({ status })
+        .eq("id", task.id)
+        .eq("user_id", user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      await refreshStrategicTasks(user.id);
+      setTaskFormMessageType("success");
+      setTaskFormMessage(`Task marked as ${status}.`);
+    } catch (error) {
+      setTaskFormMessageType("error");
+      setTaskFormMessage(
+        error instanceof Error ? error.message : "Unable to update task.",
+      );
+    } finally {
+      setTaskActionId(null);
+    }
+  }
+
+  async function handleDeleteArchivedTask(task: StrategicTask) {
+    setTaskFormMessage("");
+
+    if (!user) {
+      setTaskFormMessageType("error");
+      setTaskFormMessage("Please sign in before deleting strategic tasks.");
+      return;
+    }
+
+    if (task.status !== "archived") {
+      setTaskFormMessageType("error");
+      setTaskFormMessage("Only archived tasks can be deleted.");
+      return;
+    }
+
+    if (!window.confirm("Delete this archived task permanently?")) {
+      return;
+    }
+
+    setTaskActionId(`delete:${task.id}`);
+
+    try {
+      const supabase = await getSupabase();
+      const { error } = await supabase
+        .from("strategic_tasks")
+        .delete()
+        .eq("id", task.id)
+        .eq("user_id", user.id)
+        .eq("status", "archived");
+
+      if (error) {
+        throw error;
+      }
+
+      await refreshStrategicTasks(user.id);
+      setTaskFormMessageType("success");
+      setTaskFormMessage("Archived task deleted.");
+    } catch (error) {
+      setTaskFormMessageType("error");
+      setTaskFormMessage(
+        error instanceof Error ? error.message : "Unable to delete task.",
+      );
+    } finally {
+      setTaskActionId(null);
+    }
+  }
+
   const databaseStatusText =
     databaseStatus === "loading"
       ? "Checking..."
@@ -1507,6 +1638,23 @@ export default function Home() {
                 </h2>
               </div>
 
+              <div className="mb-4 flex flex-wrap gap-2">
+                {taskFilters.map((filter) => (
+                  <button
+                    className={`rounded-md border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] transition ${
+                      selectedTaskFilter === filter.value
+                        ? "border-[#39ff88]/40 bg-[#39ff88]/10 text-[#baffd2]"
+                        : "border-white/10 bg-white/[0.03] text-zinc-400 hover:bg-white/[0.07]"
+                    }`}
+                    key={filter.value}
+                    onClick={() => setSelectedTaskFilter(filter.value)}
+                    type="button"
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+
               <div className="rounded-lg border border-white/10 bg-[#101116] p-5">
                 <div className="grid gap-3">
                   <input
@@ -1599,15 +1747,14 @@ export default function Home() {
 
                 {!strategicTasksLoading &&
                 !strategicTasksError &&
-                strategicTasks.length === 0 ? (
+                filteredStrategicTasks.length === 0 ? (
                   <div className="rounded-lg border border-white/10 bg-[#14161c] p-5 text-sm leading-6 text-zinc-400">
-                    No strategic tasks yet. Add your first mission to start
-                    building momentum.
+                    No tasks match this filter yet.
                   </div>
                 ) : null}
 
                 {!strategicTasksLoading &&
-                  strategicTasks.map((task) => (
+                  filteredStrategicTasks.map((task) => (
                     <article
                       className="rounded-lg border border-white/10 bg-[#14161c] p-5"
                       key={task.id}
@@ -1626,6 +1773,11 @@ export default function Home() {
                             Completed
                           </div>
                         ) : null}
+                        {task.status === "archived" ? (
+                          <div className="rounded-md border border-zinc-500/30 bg-zinc-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-300">
+                            Archived
+                          </div>
+                        ) : null}
                         <div className="rounded-md border border-[#39ff88]/20 bg-[#39ff88]/10 px-3 py-1 text-xs font-semibold text-[#baffd2]">
                           {task.xp_reward} XP
                         </div>
@@ -1641,18 +1793,106 @@ export default function Home() {
                       <p className="mt-3 text-sm text-zinc-500">
                         Category: {task.category || "Uncategorized"}
                       </p>
-                      {task.status === "active" ? (
-                        <button
-                          className="mt-4 rounded-md border border-[#39ff88]/40 bg-[#39ff88] px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#7cffaa] disabled:cursor-not-allowed disabled:opacity-60"
-                          disabled={completingTaskId === task.id}
-                          onClick={() => handleCompleteStrategicTask(task)}
-                          type="button"
-                        >
-                          {completingTaskId === task.id
-                            ? "Completing..."
-                            : "Complete Task"}
-                        </button>
-                      ) : null}
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {task.status === "active" ? (
+                          <>
+                            <button
+                              className="rounded-md border border-[#39ff88]/40 bg-[#39ff88] px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#7cffaa] disabled:cursor-not-allowed disabled:opacity-60"
+                              disabled={
+                                completingTaskId === task.id ||
+                                taskActionId !== null
+                              }
+                              onClick={() => handleCompleteStrategicTask(task)}
+                              type="button"
+                            >
+                              {completingTaskId === task.id
+                                ? "Completing..."
+                                : "Complete Task"}
+                            </button>
+                            <button
+                              className="rounded-md border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                              disabled={taskActionId !== null}
+                              onClick={() =>
+                                handleUpdateTaskStatus(task, "paused")
+                              }
+                              type="button"
+                            >
+                              {taskActionId === `paused:${task.id}`
+                                ? "Pausing..."
+                                : "Pause"}
+                            </button>
+                            <button
+                              className="rounded-md border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                              disabled={taskActionId !== null}
+                              onClick={() =>
+                                handleUpdateTaskStatus(task, "archived")
+                              }
+                              type="button"
+                            >
+                              {taskActionId === `archived:${task.id}`
+                                ? "Archiving..."
+                                : "Archive"}
+                            </button>
+                          </>
+                        ) : null}
+
+                        {task.status === "paused" ? (
+                          <>
+                            <button
+                              className="rounded-md border border-[#39ff88]/40 bg-[#39ff88]/10 px-4 py-2 text-sm font-semibold text-[#baffd2] transition hover:bg-[#39ff88]/15 disabled:cursor-not-allowed disabled:opacity-60"
+                              disabled={taskActionId !== null}
+                              onClick={() =>
+                                handleUpdateTaskStatus(task, "active")
+                              }
+                              type="button"
+                            >
+                              {taskActionId === `active:${task.id}`
+                                ? "Resuming..."
+                                : "Resume"}
+                            </button>
+                            <button
+                              className="rounded-md border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                              disabled={taskActionId !== null}
+                              onClick={() =>
+                                handleUpdateTaskStatus(task, "archived")
+                              }
+                              type="button"
+                            >
+                              {taskActionId === `archived:${task.id}`
+                                ? "Archiving..."
+                                : "Archive"}
+                            </button>
+                          </>
+                        ) : null}
+
+                        {task.status === "completed" ? (
+                          <button
+                            className="rounded-md border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                            disabled={taskActionId !== null}
+                            onClick={() =>
+                              handleUpdateTaskStatus(task, "archived")
+                            }
+                            type="button"
+                          >
+                            {taskActionId === `archived:${task.id}`
+                              ? "Archiving..."
+                              : "Archive"}
+                          </button>
+                        ) : null}
+
+                        {task.status === "archived" ? (
+                          <button
+                            className="rounded-md border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                            disabled={taskActionId !== null}
+                            onClick={() => handleDeleteArchivedTask(task)}
+                            type="button"
+                          >
+                            {taskActionId === `delete:${task.id}`
+                              ? "Deleting..."
+                              : "Delete"}
+                          </button>
+                        ) : null}
+                      </div>
                     </article>
                   ))}
               </div>
