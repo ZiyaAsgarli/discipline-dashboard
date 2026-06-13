@@ -1,1562 +1,231 @@
-"use client";
-
-import type { User } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
-import type {
-  Profile,
-  DailyCheckin,
-  ExistingDailyCheckin,
-  StrategicTask,
-  TaskFilter,
-  XpEvent,
-  WeeklyXpData,
-  XpSourceData,
-} from "@/components/types";
-import { AuthPanel } from "@/components/AuthPanel";
-import { DashboardHeader } from "@/components/DashboardHeader";
-import { StatCards } from "@/components/StatCards";
-import { DatabaseStatusCard } from "@/components/DatabaseStatusCard";
-import { TodayExecutionCard } from "@/components/TodayExecutionCard";
-import { AnalyticsSummary } from "@/components/AnalyticsSummary";
-import { DisciplineGrid } from "@/components/DisciplineGrid";
-import { RpgProgress } from "@/components/RpgProgress";
-import { RecentXpActivity } from "@/components/RecentXpActivity";
-import { WeeklyXpAnalytics } from "@/components/WeeklyXpAnalytics";
-import { XpBySource } from "@/components/XpBySource";
-import { WeeklyCompletionAnalytics } from "@/components/WeeklyCompletionAnalytics";
-import { MonthlyAnalyticsOverview } from "@/components/MonthlyAnalyticsOverview";
-import { StrategicTasksManager } from "@/components/StrategicTasksManager";
-import {
-  getLevelTitle,
-  getCurrentLevelXp,
-  getLevelProgressPercent,
-} from "@/lib/dashboard/levels";
-import {
-  getTodayDate,
-  formatActivityDate,
-  getThirtyDaysAgoDate,
-  calculateCampaignDay,
-} from "@/lib/dashboard/dates";
-import {
-  calculateCurrentStreak,
-  calculateLongestStreak,
-  calculateCompletionRate,
-  buildWeeklyCompletionData,
-  buildWeeklyXpData,
-  buildXpBySource,
-  calculateMonthlyAnalytics,
-} from "@/lib/dashboard/analytics";
-async function getSupabase() {
-  const { supabase } = await import("@/lib/supabaseClient");
-  return supabase;
-}
-
-
-function validateCredentials(email: string, password: string) {
-  if (!email.trim()) {
-    return "Email is required";
-  }
-
-  if (!password) {
-    return "Password is required";
-  }
-
-  if (password.length < 6) {
-    return "Password must be at least 6 characters";
-  }
-
-  return "";
-}
-
-
-
-
-async function upsertProfile(
-  supabase: Awaited<ReturnType<typeof getSupabase>>,
-  user: User,
-) {
-  const { error } = await supabase.from("profiles").upsert({
-    id: user.id,
-    email: user.email,
-    display_name: "Ziya",
-    total_xp: 0,
-    current_level: 1,
-    discipline_start_date: getTodayDate(),
-  });
-
-  if (error) {
-    throw error;
-  }
-}
-
-export default function Home() {
-  const [user, setUser] = useState<User | null>(null);
-  const [authChecking, setAuthChecking] = useState(true);
-  const [authLoading, setAuthLoading] = useState<"sign-in" | "sign-up" | null>(
-    null,
-  );
-  const [authError, setAuthError] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
-  const [profileError, setProfileError] = useState("");
-  const [dailyCheckins, setDailyCheckins] = useState<DailyCheckin[]>([]);
-  const [dailyCheckinsLoading, setDailyCheckinsLoading] = useState(false);
-  const [dailyCheckinsError, setDailyCheckinsError] = useState("");
-  const [strategicTasks, setStrategicTasks] = useState<StrategicTask[]>([]);
-  const [strategicTasksLoading, setStrategicTasksLoading] = useState(false);
-  const [strategicTasksError, setStrategicTasksError] = useState("");
-  const [xpEvents, setXpEvents] = useState<XpEvent[]>([]);
-  const [xpEventsCount, setXpEventsCount] = useState(0);
-  const [xpEventsLoading, setXpEventsLoading] = useState(false);
-  const [xpEventsError, setXpEventsError] = useState("");
-  const [weeklyXpData, setWeeklyXpData] = useState<WeeklyXpData[]>([]);
-  const [weeklyXpLoading, setWeeklyXpLoading] = useState(false);
-  const [weeklyXpError, setWeeklyXpError] = useState("");
-  const [xpSourceData, setXpSourceData] = useState<XpSourceData>({
-    daily_checkin: 0,
-    strategic_task: 0,
-    manual_adjustment: 0,
-  });
-  const [xpSourceLoading, setXpSourceLoading] = useState(false);
-  const [xpSourceError, setXpSourceError] = useState("");
-  const [monthlyXpEarned, setMonthlyXpEarned] = useState(0);
-  const [monthlyTasksCompleted, setMonthlyTasksCompleted] = useState(0);
-  const [monthlyAnalyticsLoading, setMonthlyAnalyticsLoading] = useState(false);
-  const [monthlyAnalyticsError, setMonthlyAnalyticsError] = useState("");
-  const [taskTitle, setTaskTitle] = useState("");
-  const [taskDescription, setTaskDescription] = useState("");
-  const [taskPriority, setTaskPriority] =
-    useState<StrategicTask["priority"]>("Medium");
-  const [taskCategory, setTaskCategory] = useState("");
-  const [taskXpReward, setTaskXpReward] = useState("250");
-  const [taskFormLoading, setTaskFormLoading] = useState(false);
-  const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
-  const [taskActionId, setTaskActionId] = useState<string | null>(null);
-  const [selectedTaskFilter, setSelectedTaskFilter] =
-    useState<TaskFilter>("active");
-  const [taskFormMessage, setTaskFormMessage] = useState("");
-  const [taskFormMessageType, setTaskFormMessageType] = useState<
-    "success" | "error" | "info"
-  >("info");
-  const [checkinLoading, setCheckinLoading] = useState(false);
-  const [checkinMessage, setCheckinMessage] = useState("");
-  const [checkinMessageType, setCheckinMessageType] = useState<
-    "success" | "error" | "info"
-  >("info");
-  const [databaseStatus, setDatabaseStatus] = useState<
-    "loading" | "connected" | "error"
-  >("loading");
-  const profileLevel = profile?.current_level ?? 1;
-  const levelTitle = getLevelTitle(profileLevel);
-  const completedCheckinsCount = dailyCheckins.filter(
-    (checkin) => checkin.completed,
-  ).length;
-  const completedCheckinDays = new Set(
-    dailyCheckins
-      .filter((checkin) => checkin.completed)
-      .map((checkin) => checkin.campaign_day),
-  );
-  const completedCampaignDays = Array.from(completedCheckinDays).sort(
-    (firstDay, secondDay) => firstDay - secondDay,
-  );
-  const currentStreak = calculateCurrentStreak(completedCampaignDays, completedCheckinDays);
-  const longestStreak = calculateLongestStreak(completedCampaignDays);
-
-  const currentStreakLabel = `${currentStreak} ${
-    currentStreak === 1 ? "day" : "days"
-  }`;
-  const longestStreakLabel = `${longestStreak} ${
-    longestStreak === 1 ? "day" : "days"
-  }`;
-  const activeTasksCount = strategicTasks.filter(
-    (task) => task.status === "active",
-  ).length;
-  const completedTasksCount = strategicTasks.filter(
-    (task) => task.status === "completed",
-  ).length;
-  const completionRate = calculateCompletionRate(completedCheckinsCount, 180);
-
-  const last7DaysCompletion = buildWeeklyCompletionData(
-    profile?.discipline_start_date,
-    completedCheckinDays
-  );
-  const weeklyCompletedCount = last7DaysCompletion.filter(
-    (d) => d.completed,
-  ).length;
-
-  const { monthlyCompletedDays, monthlyCompletionRate } = calculateMonthlyAnalytics(
-    profile?.discipline_start_date,
-    completedCheckinDays
-  );
-
-  const filteredStrategicTasks =
-    selectedTaskFilter === "all"
-      ? strategicTasks
-      : strategicTasks.filter((task) => task.status === selectedTaskFilter);
-  const taskFilters: Array<{ label: string; value: TaskFilter }> = [
-    { label: "All", value: "all" },
-    { label: "Active", value: "active" },
-    { label: "Completed", value: "completed" },
-    { label: "Paused", value: "paused" },
-    { label: "Archived", value: "archived" },
-  ];
-
-
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function fetchWeeklyXp() {
-      if (!user) {
-        if (isMounted) {
-          setWeeklyXpData([]);
-          setWeeklyXpError("");
-          setWeeklyXpLoading(false);
-        }
-        return;
-      }
-
-      setWeeklyXpLoading(true);
-      setWeeklyXpError("");
-
-      try {
-        const supabase = await getSupabase();
-        const now = new Date();
-        const sevenDaysAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
-        sevenDaysAgo.setHours(0, 0, 0, 0);
-
-        const { data, error } = await supabase
-          .from("xp_events")
-          .select("xp_amount, created_at")
-          .eq("user_id", user.id)
-          .gte("created_at", sevenDaysAgo.toISOString())
-          .returns<{ xp_amount: number; created_at: string }[]>();
-
-        if (!isMounted) return;
-
-        if (error) {
-          setWeeklyXpData([]);
-          setWeeklyXpError("Unable to load weekly analytics.");
-          return;
-        }
-
-        const chartData = buildWeeklyXpData(data ?? []);
-        setWeeklyXpData(chartData);
-      } catch {
-        if (isMounted) {
-          setWeeklyXpData([]);
-          setWeeklyXpError("Unable to load weekly analytics.");
-        }
-      } finally {
-        if (isMounted) {
-          setWeeklyXpLoading(false);
-        }
-      }
-    }
-
-    async function fetchXpSourceBreakdown() {
-      if (!user) {
-        if (isMounted) {
-          setXpSourceData({
-            daily_checkin: 0,
-            strategic_task: 0,
-            manual_adjustment: 0,
-          });
-          setXpSourceError("");
-          setXpSourceLoading(false);
-        }
-        return;
-      }
-
-      setXpSourceLoading(true);
-      setXpSourceError("");
-
-      try {
-        const supabase = await getSupabase();
-
-        const { data, error } = await supabase
-          .from("xp_events")
-          .select("xp_amount, source_type")
-          .eq("user_id", user.id)
-          .returns<{ xp_amount: number; source_type: string }[]>();
-
-        if (!isMounted) return;
-
-        if (error) {
-          setXpSourceData({
-            daily_checkin: 0,
-            strategic_task: 0,
-            manual_adjustment: 0,
-          });
-          setXpSourceError("Unable to load XP sources.");
-          return;
-        }
-
-        const sourceData = buildXpBySource(data ?? []);
-        setXpSourceData(sourceData);
-      } catch {
-        if (isMounted) {
-          setXpSourceData({
-            daily_checkin: 0,
-            strategic_task: 0,
-            manual_adjustment: 0,
-          });
-          setXpSourceError("Unable to load XP sources.");
-        }
-      } finally {
-        if (isMounted) {
-          setXpSourceLoading(false);
-        }
-      }
-    }
-
-    async function fetchMonthlyStats() {
-      if (!user) {
-        if (isMounted) {
-          setMonthlyXpEarned(0);
-          setMonthlyTasksCompleted(0);
-          setMonthlyAnalyticsLoading(false);
-        }
-        return;
-      }
-      setMonthlyAnalyticsLoading(true);
-      setMonthlyAnalyticsError("");
-
-      try {
-        const supabase = await getSupabase();
-        const startDateStr = getThirtyDaysAgoDate();
-
-        const [xpRes, tasksRes] = await Promise.all([
-          supabase
-            .from("xp_events")
-            .select("xp_amount")
-            .eq("user_id", user.id)
-            .gte("created_at", startDateStr),
-          supabase
-            .from("strategic_tasks")
-            .select("id", { count: "exact", head: true })
-            .eq("user_id", user.id)
-            .eq("status", "completed")
-            .gte("completed_at", startDateStr),
-        ]);
-
-        if (!isMounted) return;
-
-        if (xpRes.error || tasksRes.error) {
-          setMonthlyXpEarned(0);
-          setMonthlyTasksCompleted(0);
-          setMonthlyAnalyticsError("Unable to load monthly analytics.");
-          return;
-        }
-
-        const totalXp =
-          xpRes.data?.reduce((sum, event) => sum + event.xp_amount, 0) ?? 0;
-        setMonthlyXpEarned(totalXp);
-        setMonthlyTasksCompleted(tasksRes.count ?? 0);
-      } catch {
-        if (isMounted) {
-          setMonthlyXpEarned(0);
-          setMonthlyTasksCompleted(0);
-          setMonthlyAnalyticsError("Unable to load monthly analytics.");
-        }
-      } finally {
-        if (isMounted) {
-          setMonthlyAnalyticsLoading(false);
-        }
-      }
-    }
-
-    fetchWeeklyXp();
-    fetchXpSourceBreakdown();
-    fetchMonthlyStats();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user, profile?.total_xp]);
-
-  useEffect(() => {
-    let isMounted = true;
-    let unsubscribe: (() => void) | undefined;
-
-    async function fetchProfile(userId: string) {
-      setProfileLoading(true);
-      setProfileError("");
-
-      try {
-        const supabase = await getSupabase();
-        const { data, error } = await supabase
-          .from("profiles")
-          .select(
-            "id, email, display_name, total_xp, current_level, discipline_start_date",
-          )
-          .eq("id", userId)
-          .single<Profile>();
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (error) {
-          setProfile(null);
-          setProfileError("Unable to load profile data.");
-          return;
-        }
-
-        setProfile(data);
-      } catch {
-        if (isMounted) {
-          setProfile(null);
-          setProfileError("Unable to load profile data.");
-        }
-      } finally {
-        if (isMounted) {
-          setProfileLoading(false);
-        }
-      }
-    }
-
-    async function checkDatabaseStatus() {
-      try {
-        const supabase = await getSupabase();
-        const { error } = await supabase.from("profiles").select("id").limit(1);
-
-        if (isMounted) {
-          setDatabaseStatus(error ? "error" : "connected");
-        }
-      } catch {
-        if (isMounted) {
-          setDatabaseStatus("error");
-        }
-      }
-    }
-
-    async function fetchDailyCheckins(userId: string) {
-      setDailyCheckinsLoading(true);
-      setDailyCheckinsError("");
-
-      try {
-        const supabase = await getSupabase();
-        const { data, error } = await supabase
-          .from("daily_checkins")
-          .select("id, campaign_day, completed")
-          .eq("user_id", userId)
-          .order("campaign_day", { ascending: true })
-          .returns<DailyCheckin[]>();
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (error) {
-          setDailyCheckins([]);
-          setDailyCheckinsError("Unable to load discipline grid data.");
-          return;
-        }
-
-        setDailyCheckins(data ?? []);
-      } catch {
-        if (isMounted) {
-          setDailyCheckins([]);
-          setDailyCheckinsError("Unable to load discipline grid data.");
-        }
-      } finally {
-        if (isMounted) {
-          setDailyCheckinsLoading(false);
-        }
-      }
-    }
-
-    async function fetchStrategicTasks(userId: string) {
-      setStrategicTasksLoading(true);
-      setStrategicTasksError("");
-
-      try {
-        const supabase = await getSupabase();
-        const { data, error } = await supabase
-          .from("strategic_tasks")
-          .select(
-            "id, title, description, category, priority, status, xp_reward, created_at",
-          )
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .returns<StrategicTask[]>();
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (error) {
-          setStrategicTasks([]);
-          setStrategicTasksError("Unable to load strategic tasks.");
-          return;
-        }
-
-        setStrategicTasks(data ?? []);
-      } catch {
-        if (isMounted) {
-          setStrategicTasks([]);
-          setStrategicTasksError("Unable to load strategic tasks.");
-        }
-      } finally {
-        if (isMounted) {
-          setStrategicTasksLoading(false);
-        }
-      }
-    }
-
-    async function fetchXpEvents(userId: string) {
-      setXpEventsLoading(true);
-      setXpEventsError("");
-
-      try {
-        const supabase = await getSupabase();
-        const { data, error } = await supabase
-          .from("xp_events")
-          .select("id, description, xp_amount, source_type, created_at")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(5)
-          .returns<XpEvent[]>();
-        const { count, error: countError } = await supabase
-          .from("xp_events")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", userId);
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (error || countError) {
-          setXpEvents([]);
-          setXpEventsCount(0);
-          setXpEventsError("Unable to load XP activity.");
-          return;
-        }
-
-        setXpEvents(data ?? []);
-        setXpEventsCount(count ?? 0);
-      } catch {
-        if (isMounted) {
-          setXpEvents([]);
-          setXpEventsCount(0);
-          setXpEventsError("Unable to load XP activity.");
-        }
-      } finally {
-        if (isMounted) {
-          setXpEventsLoading(false);
-        }
-      }
-    }
-
-    async function loadSession() {
-      try {
-        const supabase = await getSupabase();
-        const { data } = await supabase.auth.getSession();
-
-        if (!isMounted) {
-          return;
-        }
-
-        setUser(data.session?.user ?? null);
-        setAuthChecking(false);
-
-        if (data.session?.user) {
-          checkDatabaseStatus();
-          fetchProfile(data.session.user.id);
-          fetchDailyCheckins(data.session.user.id);
-          fetchStrategicTasks(data.session.user.id);
-          fetchXpEvents(data.session.user.id);
-        } else {
-          setProfile(null);
-          setProfileLoading(false);
-          setProfileError("");
-          setDailyCheckins([]);
-          setDailyCheckinsLoading(false);
-          setDailyCheckinsError("");
-          setStrategicTasks([]);
-          setStrategicTasksLoading(false);
-          setStrategicTasksError("");
-          setXpEvents([]);
-          setXpEventsCount(0);
-          setXpEventsLoading(false);
-          setXpEventsError("");
-        }
-
-        const { data: listener } = supabase.auth.onAuthStateChange(
-          (_event, session) => {
-            setUser(session?.user ?? null);
-            setDatabaseStatus("loading");
-
-            if (session?.user) {
-              checkDatabaseStatus();
-              fetchProfile(session.user.id);
-              fetchDailyCheckins(session.user.id);
-              fetchStrategicTasks(session.user.id);
-              fetchXpEvents(session.user.id);
-            } else {
-              setProfile(null);
-              setProfileLoading(false);
-              setProfileError("");
-              setDailyCheckins([]);
-              setDailyCheckinsLoading(false);
-              setDailyCheckinsError("");
-              setStrategicTasks([]);
-              setStrategicTasksLoading(false);
-              setStrategicTasksError("");
-              setXpEvents([]);
-              setXpEventsCount(0);
-              setXpEventsLoading(false);
-              setXpEventsError("");
-            }
-          },
-        );
-
-        unsubscribe = () => listener.subscription.unsubscribe();
-      } catch {
-        if (isMounted) {
-          setUser(null);
-          setAuthChecking(false);
-          setAuthError("Unable to initialize authentication.");
-        }
-      }
-    }
-
-    loadSession();
-
-    return () => {
-      isMounted = false;
-      unsubscribe?.();
-    };
-  }, []);
-
-  async function handleSignIn() {
-    setAuthError("");
-
-    const validationError = validateCredentials(email, password);
-
-    if (validationError) {
-      setAuthError(validationError);
-      return;
-    }
-
-    setAuthLoading("sign-in");
-
-    try {
-      const supabase = await getSupabase();
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data.user) {
-        await upsertProfile(supabase, data.user);
-        setUser(data.user);
-        setProfileLoading(true);
-        const { data: profileData, error: profileFetchError } = await supabase
-          .from("profiles")
-          .select(
-            "id, email, display_name, total_xp, current_level, discipline_start_date",
-          )
-          .eq("id", data.user.id)
-          .single<Profile>();
-
-        if (profileFetchError) {
-          setProfileError("Unable to load profile data.");
-        } else {
-          setProfile(profileData);
-          setProfileError("");
-        }
-
-        setDailyCheckinsLoading(true);
-        const { data: checkinsData, error: checkinsError } = await supabase
-          .from("daily_checkins")
-          .select("id, campaign_day, completed")
-          .eq("user_id", data.user.id)
-          .order("campaign_day", { ascending: true })
-          .returns<DailyCheckin[]>();
-
-        if (checkinsError) {
-          setDailyCheckins([]);
-          setDailyCheckinsError("Unable to load discipline grid data.");
-        } else {
-          setDailyCheckins(checkinsData ?? []);
-          setDailyCheckinsError("");
-        }
-
-        setStrategicTasksLoading(true);
-        const { data: tasksData, error: tasksError } = await supabase
-          .from("strategic_tasks")
-          .select(
-            "id, title, description, category, priority, status, xp_reward, created_at",
-          )
-          .eq("user_id", data.user.id)
-          .order("created_at", { ascending: false })
-          .returns<StrategicTask[]>();
-
-        if (tasksError) {
-          setStrategicTasks([]);
-          setStrategicTasksError("Unable to load strategic tasks.");
-        } else {
-          setStrategicTasks(tasksData ?? []);
-          setStrategicTasksError("");
-        }
-
-        setXpEventsLoading(true);
-        const { data: xpEventsData, error: xpEventsFetchError } = await supabase
-          .from("xp_events")
-          .select("id, description, xp_amount, source_type, created_at")
-          .eq("user_id", data.user.id)
-          .order("created_at", { ascending: false })
-          .limit(5)
-          .returns<XpEvent[]>();
-        const { count: xpEventsTotal, error: xpEventsCountError } =
-          await supabase
-            .from("xp_events")
-            .select("id", { count: "exact", head: true })
-            .eq("user_id", data.user.id);
-
-        if (xpEventsFetchError || xpEventsCountError) {
-          setXpEvents([]);
-          setXpEventsCount(0);
-          setXpEventsError("Unable to load XP activity.");
-        } else {
-          setXpEvents(xpEventsData ?? []);
-          setXpEventsCount(xpEventsTotal ?? 0);
-          setXpEventsError("");
-        }
-      }
-    } catch (error) {
-      setAuthError(
-        error instanceof Error ? error.message : "Unable to sign in.",
-      );
-    } finally {
-      setAuthLoading(null);
-      setProfileLoading(false);
-      setDailyCheckinsLoading(false);
-      setStrategicTasksLoading(false);
-      setXpEventsLoading(false);
-    }
-  }
-
-  async function handleSignUp() {
-    setAuthError("");
-
-    const validationError = validateCredentials(email, password);
-
-    if (validationError) {
-      setAuthError(validationError);
-      return;
-    }
-
-    setAuthLoading("sign-up");
-
-    try {
-      const supabase = await getSupabase();
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data.user) {
-        await upsertProfile(supabase, data.user);
-        setUser(data.user);
-        setProfileLoading(true);
-        const { data: profileData, error: profileFetchError } = await supabase
-          .from("profiles")
-          .select(
-            "id, email, display_name, total_xp, current_level, discipline_start_date",
-          )
-          .eq("id", data.user.id)
-          .single<Profile>();
-
-        if (profileFetchError) {
-          setProfileError("Unable to load profile data.");
-        } else {
-          setProfile(profileData);
-          setProfileError("");
-        }
-
-        setDailyCheckinsLoading(true);
-        const { data: checkinsData, error: checkinsError } = await supabase
-          .from("daily_checkins")
-          .select("id, campaign_day, completed")
-          .eq("user_id", data.user.id)
-          .order("campaign_day", { ascending: true })
-          .returns<DailyCheckin[]>();
-
-        if (checkinsError) {
-          setDailyCheckins([]);
-          setDailyCheckinsError("Unable to load discipline grid data.");
-        } else {
-          setDailyCheckins(checkinsData ?? []);
-          setDailyCheckinsError("");
-        }
-
-        setStrategicTasksLoading(true);
-        const { data: tasksData, error: tasksError } = await supabase
-          .from("strategic_tasks")
-          .select(
-            "id, title, description, category, priority, status, xp_reward, created_at",
-          )
-          .eq("user_id", data.user.id)
-          .order("created_at", { ascending: false })
-          .returns<StrategicTask[]>();
-
-        if (tasksError) {
-          setStrategicTasks([]);
-          setStrategicTasksError("Unable to load strategic tasks.");
-        } else {
-          setStrategicTasks(tasksData ?? []);
-          setStrategicTasksError("");
-        }
-
-        setXpEventsLoading(true);
-        const { data: xpEventsData, error: xpEventsFetchError } = await supabase
-          .from("xp_events")
-          .select("id, description, xp_amount, source_type, created_at")
-          .eq("user_id", data.user.id)
-          .order("created_at", { ascending: false })
-          .limit(5)
-          .returns<XpEvent[]>();
-        const { count: xpEventsTotal, error: xpEventsCountError } =
-          await supabase
-            .from("xp_events")
-            .select("id", { count: "exact", head: true })
-            .eq("user_id", data.user.id);
-
-        if (xpEventsFetchError || xpEventsCountError) {
-          setXpEvents([]);
-          setXpEventsCount(0);
-          setXpEventsError("Unable to load XP activity.");
-        } else {
-          setXpEvents(xpEventsData ?? []);
-          setXpEventsCount(xpEventsTotal ?? 0);
-          setXpEventsError("");
-        }
-      }
-    } catch (error) {
-      setAuthError(
-        error instanceof Error ? error.message : "Unable to sign up.",
-      );
-    } finally {
-      setAuthLoading(null);
-      setProfileLoading(false);
-      setDailyCheckinsLoading(false);
-      setStrategicTasksLoading(false);
-      setXpEventsLoading(false);
-    }
-  }
-
-  async function handleSignOut() {
-    setAuthError("");
-
-    try {
-      const supabase = await getSupabase();
-      await supabase.auth.signOut();
-      setUser(null);
-      setProfile(null);
-      setProfileError("");
-      setProfileLoading(false);
-      setDailyCheckins([]);
-      setDailyCheckinsError("");
-      setDailyCheckinsLoading(false);
-      setStrategicTasks([]);
-      setStrategicTasksError("");
-      setStrategicTasksLoading(false);
-      setXpEvents([]);
-      setXpEventsCount(0);
-      setXpEventsError("");
-      setXpEventsLoading(false);
-      setDatabaseStatus("loading");
-    } catch (error) {
-      setAuthError(
-        error instanceof Error ? error.message : "Unable to sign out.",
-      );
-    }
-  }
-
-  async function handleCompleteToday() {
-    setCheckinMessage("");
-
-    if (!user) {
-      setCheckinMessageType("error");
-      setCheckinMessage("Please sign in before completing today.");
-      return;
-    }
-
-    if (!profile?.discipline_start_date) {
-      setCheckinMessageType("error");
-      setCheckinMessage("Profile start date is missing.");
-      return;
-    }
-
-    const today = getTodayDate();
-    const campaignDay = calculateCampaignDay(today, profile.discipline_start_date);
-
-    if (campaignDay < 1 || campaignDay > 180) {
-      setCheckinMessageType("info");
-      setCheckinMessage("Today is outside your 180-day discipline campaign.");
-      return;
-    }
-
-    setCheckinLoading(true);
-
-    try {
-      const supabase = await getSupabase();
-      const { data: existingCheckin, error: existingCheckinError } =
-        await supabase
-          .from("daily_checkins")
-          .select("id, completed")
-          .eq("user_id", user.id)
-          .eq("checkin_date", today)
-          .maybeSingle<ExistingDailyCheckin>();
-
-      if (existingCheckinError) {
-        throw existingCheckinError;
-      }
-
-      if (existingCheckin?.completed) {
-        setCheckinMessageType("info");
-        setCheckinMessage("Today is already completed.");
-        return;
-      }
-
-      const { data: completedCheckin, error: checkinError } = await supabase
-        .from("daily_checkins")
-        .upsert(
-          {
-            user_id: user.id,
-            checkin_date: today,
-            campaign_day: campaignDay,
-            completed: true,
-            xp_awarded: 100,
-            notes: "Daily discipline completed",
-          },
-          { onConflict: "user_id,checkin_date" },
-        )
-        .select("id, completed")
-        .single<ExistingDailyCheckin>();
-
-      if (checkinError) {
-        throw checkinError;
-      }
-
-      const { error: xpEventError } = await supabase.from("xp_events").insert({
-        user_id: user.id,
-        source_type: "daily_checkin",
-        source_id: completedCheckin.id,
-        xp_amount: 100,
-        description: "Completed daily discipline check-in",
-      });
-
-      if (xpEventError) {
-        throw xpEventError;
-      }
-
-      const newTotalXp = (profile.total_xp ?? 0) + 100;
-      const newCurrentLevel = Math.floor(newTotalXp / 1000) + 1;
-      const { error: profileUpdateError } = await supabase
-        .from("profiles")
-        .update({
-          total_xp: newTotalXp,
-          current_level: newCurrentLevel,
-        })
-        .eq("id", user.id);
-
-      if (profileUpdateError) {
-        throw profileUpdateError;
-      }
-
-      setProfileLoading(true);
-      const { data: refreshedProfile, error: refreshProfileError } =
-        await supabase
-          .from("profiles")
-          .select(
-            "id, email, display_name, total_xp, current_level, discipline_start_date",
-          )
-          .eq("id", user.id)
-          .single<Profile>();
-
-      if (refreshProfileError) {
-        throw refreshProfileError;
-      }
-
-      setProfile(refreshedProfile);
-      setProfileError("");
-
-      setDailyCheckinsLoading(true);
-      const { data: refreshedCheckins, error: refreshCheckinsError } =
-        await supabase
-          .from("daily_checkins")
-          .select("id, campaign_day, completed")
-          .eq("user_id", user.id)
-          .order("campaign_day", { ascending: true })
-          .returns<DailyCheckin[]>();
-
-      if (refreshCheckinsError) {
-        throw refreshCheckinsError;
-      }
-
-      setDailyCheckins(refreshedCheckins ?? []);
-      setDailyCheckinsError("");
-
-      setXpEventsLoading(true);
-      const { data: refreshedXpEvents, error: refreshXpEventsError } =
-        await supabase
-          .from("xp_events")
-          .select("id, description, xp_amount, source_type, created_at")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(5)
-          .returns<XpEvent[]>();
-      const { count: refreshedXpEventsCount, error: refreshXpEventsCountError } =
-        await supabase
-          .from("xp_events")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id);
-
-      if (refreshXpEventsError || refreshXpEventsCountError) {
-        throw refreshXpEventsError ?? refreshXpEventsCountError;
-      }
-
-      setXpEvents(refreshedXpEvents ?? []);
-      setXpEventsCount(refreshedXpEventsCount ?? 0);
-      setXpEventsError("");
-      setCheckinMessageType("success");
-      setCheckinMessage("Daily check-in complete. +100 XP awarded.");
-    } catch (error) {
-      setCheckinMessageType("error");
-      setCheckinMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to complete today's check-in.",
-      );
-    } finally {
-      setCheckinLoading(false);
-      setProfileLoading(false);
-      setDailyCheckinsLoading(false);
-      setXpEventsLoading(false);
-    }
-  }
-
-  async function handleAddStrategicTask() {
-    setTaskFormMessage("");
-
-    if (!user) {
-      setTaskFormMessageType("error");
-      setTaskFormMessage("Please sign in before adding a strategic task.");
-      return;
-    }
-
-    if (!taskTitle.trim()) {
-      setTaskFormMessageType("error");
-      setTaskFormMessage("Task title is required.");
-      return;
-    }
-
-    setTaskFormLoading(true);
-
-    try {
-      const supabase = await getSupabase();
-      const xpReward = Number.parseInt(taskXpReward, 10);
-      const { error } = await supabase.from("strategic_tasks").insert({
-        user_id: user.id,
-        title: taskTitle.trim(),
-        description: taskDescription.trim() || null,
-        priority: taskPriority,
-        category: taskCategory.trim() || null,
-        status: "active",
-        xp_reward: Number.isFinite(xpReward) ? xpReward : 250,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      setTaskTitle("");
-      setTaskDescription("");
-      setTaskPriority("Medium");
-      setTaskCategory("");
-      setTaskXpReward("250");
-
-      setStrategicTasksLoading(true);
-      const { data, error: fetchError } = await supabase
-        .from("strategic_tasks")
-        .select(
-          "id, title, description, category, priority, status, xp_reward, created_at",
-        )
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .returns<StrategicTask[]>();
-
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      setStrategicTasks(data ?? []);
-      setStrategicTasksError("");
-      setTaskFormMessageType("success");
-      setTaskFormMessage("Strategic task added.");
-    } catch (error) {
-      setTaskFormMessageType("error");
-      setTaskFormMessage(
-        error instanceof Error ? error.message : "Unable to add strategic task.",
-      );
-    } finally {
-      setTaskFormLoading(false);
-      setStrategicTasksLoading(false);
-    }
-  }
-
-  async function handleCompleteStrategicTask(task: StrategicTask) {
-    setTaskFormMessage("");
-
-    if (!user) {
-      setTaskFormMessageType("error");
-      setTaskFormMessage("Please sign in before completing a strategic task.");
-      return;
-    }
-
-    if (task.status !== "active") {
-      setTaskFormMessageType("info");
-      setTaskFormMessage("Task is already completed.");
-      return;
-    }
-
-    setCompletingTaskId(task.id);
-
-    try {
-      const supabase = await getSupabase();
-      const { data: latestTask, error: latestTaskError } = await supabase
-        .from("strategic_tasks")
-        .select(
-          "id, title, description, category, priority, status, xp_reward, created_at",
-        )
-        .eq("id", task.id)
-        .eq("user_id", user.id)
-        .single<StrategicTask>();
-
-      if (latestTaskError) {
-        throw latestTaskError;
-      }
-
-      if (latestTask.status !== "active") {
-        setTaskFormMessageType("info");
-        setTaskFormMessage("Task is already completed.");
-        return;
-      }
-
-      const { error: taskUpdateError } = await supabase
-        .from("strategic_tasks")
-        .update({
-          status: "completed",
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", task.id)
-        .eq("user_id", user.id);
-
-      if (taskUpdateError) {
-        throw taskUpdateError;
-      }
-
-      const { error: xpEventError } = await supabase.from("xp_events").insert({
-        user_id: user.id,
-        source_type: "strategic_task",
-        source_id: task.id,
-        xp_amount: latestTask.xp_reward,
-        description: `Completed strategic task: ${latestTask.title}`,
-      });
-
-      if (xpEventError) {
-        throw xpEventError;
-      }
-
-      const newTotalXp = (profile?.total_xp ?? 0) + latestTask.xp_reward;
-      const newCurrentLevel = Math.floor(newTotalXp / 1000) + 1;
-      const { error: profileUpdateError } = await supabase
-        .from("profiles")
-        .update({
-          total_xp: newTotalXp,
-          current_level: newCurrentLevel,
-        })
-        .eq("id", user.id);
-
-      if (profileUpdateError) {
-        throw profileUpdateError;
-      }
-
-      setProfileLoading(true);
-      const { data: refreshedProfile, error: refreshProfileError } =
-        await supabase
-          .from("profiles")
-          .select(
-            "id, email, display_name, total_xp, current_level, discipline_start_date",
-          )
-          .eq("id", user.id)
-          .single<Profile>();
-
-      if (refreshProfileError) {
-        throw refreshProfileError;
-      }
-
-      setStrategicTasksLoading(true);
-      const { data: refreshedTasks, error: refreshTasksError } = await supabase
-        .from("strategic_tasks")
-        .select(
-          "id, title, description, category, priority, status, xp_reward, created_at",
-        )
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .returns<StrategicTask[]>();
-
-      if (refreshTasksError) {
-        throw refreshTasksError;
-      }
-
-      setProfile(refreshedProfile);
-      setProfileError("");
-      setStrategicTasks(refreshedTasks ?? []);
-      setStrategicTasksError("");
-
-      setXpEventsLoading(true);
-      const { data: refreshedXpEvents, error: refreshXpEventsError } =
-        await supabase
-          .from("xp_events")
-          .select("id, description, xp_amount, source_type, created_at")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(5)
-          .returns<XpEvent[]>();
-      const { count: refreshedXpEventsCount, error: refreshXpEventsCountError } =
-        await supabase
-          .from("xp_events")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id);
-
-      if (refreshXpEventsError || refreshXpEventsCountError) {
-        throw refreshXpEventsError ?? refreshXpEventsCountError;
-      }
-
-      setXpEvents(refreshedXpEvents ?? []);
-      setXpEventsCount(refreshedXpEventsCount ?? 0);
-      setXpEventsError("");
-      setTaskFormMessageType("success");
-      setTaskFormMessage(
-        `Strategic task completed. +${latestTask.xp_reward} XP awarded.`,
-      );
-    } catch (error) {
-      setTaskFormMessageType("error");
-      setTaskFormMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to complete strategic task.",
-      );
-    } finally {
-      setCompletingTaskId(null);
-      setProfileLoading(false);
-      setStrategicTasksLoading(false);
-      setXpEventsLoading(false);
-    }
-  }
-
-  async function refreshStrategicTasks(userId: string) {
-    setStrategicTasksLoading(true);
-
-    try {
-      const supabase = await getSupabase();
-      const { data, error } = await supabase
-        .from("strategic_tasks")
-        .select(
-          "id, title, description, category, priority, status, xp_reward, created_at",
-        )
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .returns<StrategicTask[]>();
-
-      if (error) {
-        throw error;
-      }
-
-      setStrategicTasks(data ?? []);
-      setStrategicTasksError("");
-    } catch (error) {
-      setStrategicTasks([]);
-      setStrategicTasksError("Unable to load strategic tasks.");
-      throw error;
-    } finally {
-      setStrategicTasksLoading(false);
-    }
-  }
-
-  async function handleUpdateTaskStatus(
-    task: StrategicTask,
-    status: StrategicTask["status"],
-  ) {
-    setTaskFormMessage("");
-
-    if (!user) {
-      setTaskFormMessageType("error");
-      setTaskFormMessage("Please sign in before managing strategic tasks.");
-      return;
-    }
-
-    setTaskActionId(`${status}:${task.id}`);
-
-    try {
-      const supabase = await getSupabase();
-      const { error } = await supabase
-        .from("strategic_tasks")
-        .update({ status })
-        .eq("id", task.id)
-        .eq("user_id", user.id);
-
-      if (error) {
-        throw error;
-      }
-
-      await refreshStrategicTasks(user.id);
-      setTaskFormMessageType("success");
-      setTaskFormMessage(`Task marked as ${status}.`);
-    } catch (error) {
-      setTaskFormMessageType("error");
-      setTaskFormMessage(
-        error instanceof Error ? error.message : "Unable to update task.",
-      );
-    } finally {
-      setTaskActionId(null);
-    }
-  }
-
-  async function handleDeleteArchivedTask(task: StrategicTask) {
-    setTaskFormMessage("");
-
-    if (!user) {
-      setTaskFormMessageType("error");
-      setTaskFormMessage("Please sign in before deleting strategic tasks.");
-      return;
-    }
-
-    if (task.status !== "archived") {
-      setTaskFormMessageType("error");
-      setTaskFormMessage("Only archived tasks can be deleted.");
-      return;
-    }
-
-    if (!window.confirm("Delete this archived task permanently?")) {
-      return;
-    }
-
-    setTaskActionId(`delete:${task.id}`);
-
-    try {
-      const supabase = await getSupabase();
-      const { error } = await supabase
-        .from("strategic_tasks")
-        .delete()
-        .eq("id", task.id)
-        .eq("user_id", user.id)
-        .eq("status", "archived");
-
-      if (error) {
-        throw error;
-      }
-
-      await refreshStrategicTasks(user.id);
-      setTaskFormMessageType("success");
-      setTaskFormMessage("Archived task deleted.");
-    } catch (error) {
-      setTaskFormMessageType("error");
-      setTaskFormMessage(
-        error instanceof Error ? error.message : "Unable to delete task.",
-      );
-    } finally {
-      setTaskActionId(null);
-    }
-  }
-
-  const databaseStatusText =
-    databaseStatus === "loading"
-      ? "Checking..."
-      : databaseStatus === "connected"
-        ? "Connected"
-        : "Error";
-  const displayName = profile?.display_name ?? user?.email ?? "Commander";
-  const currentLevel = profileLoading
-    ? "Loading..."
-    : `Level ${profileLevel}: ${levelTitle}`;
-  const currentLevelXp = profileLoading ? 0 : getCurrentLevelXp(profile?.total_xp ?? 0);
-  const progressPercent = profileLoading ? 0 : getLevelProgressPercent(profile?.total_xp ?? 0);
-
-  if (authChecking || !user) {
-    return (
-      <AuthPanel
-        email={email}
-        password={password}
-        setEmail={setEmail}
-        setPassword={setPassword}
-        authChecking={authChecking}
-        authLoading={authLoading}
-        authError={authError}
-        onSignIn={handleSignIn}
-        onSignUp={handleSignUp}
-      />
-    );
-  }
-
+import type { Metadata } from "next";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Discipline Dashboard — RPG Career & Discipline Tracker",
+  description: "Full-stack RPG-based discipline, career tracking, and analytics dashboard built with Next.js, Supabase, and PostgreSQL.",
+};
+
+const GITHUB_URL = "https://github.com/ZiyaAsgarli/discipline-dashboard";
+const CASE_STUDY_URL = "https://github.com/ZiyaAsgarli/discipline-dashboard/blob/main/CASE_STUDY.md";
+const DASHBOARD_URL = "/dashboard";
+
+export default function LandingPage() {
   return (
-    <main className="min-h-screen bg-[#07080a] text-zinc-100">
-      <div className="mx-auto flex w-full max-w-7xl flex-col px-4 py-6 md:px-8 md:py-10">
-        <DashboardHeader
-          displayName={displayName}
-          currentLevel={currentLevel}
-          profileLoading={profileLoading}
-          profileError={profileError}
-          dailyCheckinsError={dailyCheckinsError}
-          strategicTasksError={strategicTasksError}
-          onSignOut={handleSignOut}
-        />
-
-        <DatabaseStatusCard databaseStatusText={databaseStatusText} />
-
-        {/* Mobile Main Action Area */}
-        <div className="mt-4 md:mt-8">
-          <TodayExecutionCard
-            currentLevel={currentLevel}
-            currentLevelXp={currentLevelXp}
-            progressPercent={progressPercent}
-            profileLoading={profileLoading}
-            dailyCheckinsLoading={dailyCheckinsLoading}
-            checkinLoading={checkinLoading}
-            checkinMessage={checkinMessage}
-            checkinMessageType={checkinMessageType}
-            onCompleteToday={handleCompleteToday}
-          />
+    <main className="min-h-screen bg-[#07080a] text-zinc-100 font-sans selection:bg-[#39ff88]/30">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#07080a]/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#39ff88] text-black font-bold text-lg">
+              D
+            </div>
+            <span className="font-semibold tracking-widest text-sm uppercase text-white hidden sm:block">
+              Discipline
+            </span>
+          </div>
+          <div className="flex items-center gap-4 sm:gap-6 text-sm font-medium">
+            <Link href="#features" className="text-zinc-400 hover:text-white transition hidden sm:block">Features</Link>
+            <Link href="#architecture" className="text-zinc-400 hover:text-white transition hidden sm:block">Architecture</Link>
+            <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white transition">
+              GitHub
+            </a>
+            <Link
+              href={DASHBOARD_URL}
+              className="rounded-md bg-white/10 px-4 py-2 text-white hover:bg-white/20 transition"
+            >
+              Open Dashboard
+            </Link>
+          </div>
         </div>
+      </nav>
 
-        <StatCards
-          stats={[
-            {
-              label: "Current Level",
-              value: profileLoading ? "..." : String(profileLevel),
-              detail: profileLoading ? "Loading" : levelTitle,
-            },
-            {
-              label: "Total XP",
-              value: profileLoading ? "..." : String(profile?.total_xp ?? 0),
-              detail: "Lifetime earnings",
-            },
-            {
-              label: "Completed Days",
-              value: dailyCheckinsLoading ? "..." : String(completedCheckinDays.size),
-              detail: "180-Day Grid",
-            },
-            {
-              label: "Active Tasks",
-              value: strategicTasksLoading ? "..." : String(activeTasksCount),
-              detail: "Strategic tasks",
-            },
-          ]}
-        />
-
-        {/* Desktop grid layout vs mobile stacked */}
-        <div className="mt-6 flex flex-col gap-6 md:mt-10 md:gap-8 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex w-full flex-col gap-6 md:gap-8 lg:w-[60%]">
-            <StrategicTasksManager
-              taskFilters={taskFilters}
-              selectedTaskFilter={selectedTaskFilter}
-              setSelectedTaskFilter={setSelectedTaskFilter}
-              taskTitle={taskTitle}
-              setTaskTitle={setTaskTitle}
-              taskDescription={taskDescription}
-              setTaskDescription={setTaskDescription}
-              taskPriority={taskPriority}
-              setTaskPriority={setTaskPriority}
-              taskCategory={taskCategory}
-              setTaskCategory={setTaskCategory}
-              taskXpReward={taskXpReward}
-              setTaskXpReward={setTaskXpReward}
-              taskFormLoading={taskFormLoading}
-              taskFormMessage={taskFormMessage}
-              taskFormMessageType={taskFormMessageType}
-              handleAddStrategicTask={handleAddStrategicTask}
-              strategicTasksLoading={strategicTasksLoading}
-              strategicTasksError={strategicTasksError}
-              filteredStrategicTasks={filteredStrategicTasks}
-              completingTaskId={completingTaskId}
-              taskActionId={taskActionId}
-              handleCompleteStrategicTask={handleCompleteStrategicTask}
-              handleUpdateTaskStatus={handleUpdateTaskStatus}
-              handleDeleteArchivedTask={handleDeleteArchivedTask}
-            />
-
-            <DisciplineGrid
-              dailyCheckinsLoading={dailyCheckinsLoading}
-              completedCheckinDays={completedCheckinDays}
-            />
-
-            <RpgProgress
-              currentLevel={currentLevel}
-              currentLevelXp={currentLevelXp}
-              progressPercent={progressPercent}
-              profileLoading={profileLoading}
-            />
-
-            <RecentXpActivity
-              xpEvents={xpEvents}
-              xpEventsLoading={xpEventsLoading}
-              xpEventsError={xpEventsError}
-              formatActivityDate={formatActivityDate}
-            />
+      <div className="pt-24 pb-16 sm:pt-32 sm:pb-24">
+        {/* Hero Section */}
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 text-center">
+          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-white mb-6">
+            Discipline <span className="text-[#39ff88]">Dashboard</span>
+          </h1>
+          <p className="text-xl sm:text-2xl text-zinc-400 font-medium mb-4">
+            RPG-Based Career & Discipline Tracking System
+          </p>
+          <p className="mx-auto max-w-2xl text-base sm:text-lg text-zinc-500 mb-10 leading-relaxed">
+            A full-stack personal operating system for tracking daily discipline, strategic career goals, XP progression, streaks, and analytics-backed growth.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href={DASHBOARD_URL}
+              className="w-full sm:w-auto rounded-lg bg-[#39ff88] px-8 py-4 text-center font-bold text-black hover:bg-[#2ce073] transition shadow-[0_0_30px_rgba(57,255,136,0.3)]"
+            >
+              Open Dashboard
+            </Link>
+            <a
+              href={CASE_STUDY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto rounded-lg border border-white/10 bg-white/5 px-8 py-4 text-center font-bold text-white hover:bg-white/10 transition"
+            >
+              View Case Study
+            </a>
           </div>
 
-          <aside className="flex w-full flex-col gap-6 md:gap-8 lg:w-[40%]">
-            <AnalyticsSummary
-              completionRate={completionRate}
-              xpEventsCount={xpEventsCount}
-              activeTasksCount={activeTasksCount}
-              completedTasksCount={completedTasksCount}
-              currentStreak={currentStreakLabel}
-              longestStreak={longestStreakLabel}
-            />
+          {/* Static Preview Card */}
+          <div className="mt-16 sm:mt-24 mx-auto max-w-4xl relative">
+            <div className="absolute -inset-1 rounded-xl bg-gradient-to-b from-[#39ff88]/20 to-transparent blur-2xl opacity-50"></div>
+            <div className="relative rounded-xl border border-white/10 bg-[#101217] p-6 text-left shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-white">Novice</h3>
+                  <p className="text-sm text-zinc-500 uppercase tracking-widest mt-1">Level 1</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-2xl font-bold text-[#39ff88]">350 XP</span>
+                  <p className="text-sm text-zinc-500 mt-1">/ 1000 XP</p>
+                </div>
+              </div>
+              <div className="h-3 w-full rounded-full bg-black/50 mb-8 border border-white/5 overflow-hidden">
+                <div className="h-full bg-[#39ff88] w-[35%] shadow-[0_0_12px_rgba(57,255,136,0.5)]"></div>
+              </div>
+              <div className="grid grid-cols-7 gap-2 sm:gap-3 opacity-60">
+                {Array.from({ length: 14 }).map((_, i) => (
+                  <div key={i} className={`h-8 sm:h-12 rounded-md border ${i < 5 ? 'border-[#39ff88]/50 bg-[#39ff88] shadow-[0_0_10px_rgba(57,255,136,0.2)]' : 'border-white/5 bg-white/[0.02]'}`}></div>
+                ))}
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#101217] via-transparent to-transparent"></div>
+            </div>
+          </div>
+        </section>
+
+        {/* Product Overview */}
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 mt-32">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-white">More Than a To-Do List</h2>
+            <p className="mt-4 text-zinc-400 max-w-2xl mx-auto">
+              Traditional to-do apps focus on task completion. Discipline Dashboard focuses on long-term career compounding, daily habits, and visible skill progression.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-6">
+            {[
+              { title: "Daily Execution", desc: "Build momentum with the 180-day grid. Check in daily to build streaks and earn baseline XP." },
+              { title: "Strategic Work", desc: "Manage career, portfolio, and high-value projects with a task manager that rewards focused effort." },
+              { title: "RPG Progression", desc: "Turn hard work into measurable stats. Level up, earn dynamic titles, and review your audit trail." }
+            ].map((item, i) => (
+              <div key={i} className="rounded-xl border border-white/5 bg-[#101217] p-6 hover:border-white/10 transition">
+                <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                <p className="text-zinc-400 text-sm leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Core Features */}
+        <section id="features" className="mx-auto max-w-6xl px-4 sm:px-6 mt-32">
+          <h2 className="text-3xl font-bold text-white mb-10">Core Features</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              "180-Day Discipline Grid",
+              "Daily Check-in + XP rewards",
+              "RPG Level System",
+              "Strategic Tasks Manager",
+              "XP Activity Audit Trail",
+              "Weekly & Monthly Analytics",
+              "Streak Tracking",
+              "PWA Install Support"
+            ].map((feature, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-lg border border-white/5 bg-[#14161c] p-4">
+                <div className="h-2 w-2 rounded-full bg-[#39ff88]"></div>
+                <span className="text-sm font-medium text-zinc-200">{feature}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Tech Architecture & Database */}
+        <section id="architecture" className="mx-auto max-w-6xl px-4 sm:px-6 mt-32">
+          <div className="grid lg:grid-cols-2 gap-16">
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-6">Technical Stack</h2>
+              <p className="text-zinc-400 mb-8">Built for speed, security, and mobile-first responsiveness.</p>
+              <div className="flex flex-wrap gap-3">
+                {["Next.js App Router", "TypeScript", "Tailwind CSS", "Supabase Auth", "PostgreSQL", "Row Level Security", "Vercel", "PWA"].map((tech, i) => (
+                  <span key={i} className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300">
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
             
-            <WeeklyCompletionAnalytics
-              last7DaysCompletion={last7DaysCompletion}
-              weeklyCompletedCount={weeklyCompletedCount}
-            />
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-6">Data & Security</h2>
+              <p className="text-zinc-400 mb-6">
+                The database is built on Supabase PostgreSQL with strict Row Level Security (RLS). Every query is scoped via <code>auth.uid()</code>, ensuring a secure multi-user architecture.
+              </p>
+              <div className="space-y-3">
+                {[
+                  { table: "profiles", desc: "User stats, total XP, and start dates" },
+                  { table: "daily_checkins", desc: "180-day grid records" },
+                  { table: "strategic_tasks", desc: "Long-term goals & XP rewards" },
+                  { table: "xp_events", desc: "Immutable XP audit trail" }
+                ].map((db, i) => (
+                  <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-lg border border-white/5 bg-[#14161c] p-4">
+                    <span className="text-sm font-mono text-[#39ff88]">{db.table}</span>
+                    <span className="text-sm text-zinc-500 hidden sm:inline">-</span>
+                    <span className="text-sm text-zinc-400">{db.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
 
-            <MonthlyAnalyticsOverview
-              monthlyCompletedDays={monthlyCompletedDays}
-              monthlyCompletionRate={monthlyCompletionRate}
-              monthlyXpEarned={monthlyXpEarned}
-              monthlyTasksCompleted={monthlyTasksCompleted}
-              monthlyAnalyticsLoading={monthlyAnalyticsLoading}
-              monthlyAnalyticsError={monthlyAnalyticsError}
-            />
+        {/* Analytics & BI / PWA */}
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 mt-32">
+          <div className="grid lg:grid-cols-2 gap-8">
+            <div className="rounded-xl border border-[#39ff88]/10 bg-[#101217] p-8">
+              <h3 className="text-xl font-bold text-white mb-4">Analytics & BI Value</h3>
+              <p className="text-zinc-400 mb-6 text-sm leading-relaxed">
+                Demonstrating data-driven product thinking, the app aggregates raw tables into powerful BI metrics: completion rates, XP by source, weekly trends, and monthly overviews.
+              </p>
+            </div>
+            <div className="rounded-xl border border-white/5 bg-[#101217] p-8">
+              <h3 className="text-xl font-bold text-white mb-4">Premium Mobile App Experience</h3>
+              <p className="text-zinc-400 mb-6 text-sm leading-relaxed">
+                Featuring a mobile-first premium UI, compact stats, and full PWA support. Install it directly to your home screen for a standalone, immersive habit-tracker experience.
+              </p>
+            </div>
+          </div>
+        </section>
 
-            <WeeklyXpAnalytics
-              weeklyXpData={weeklyXpData}
-              weeklyXpLoading={weeklyXpLoading}
-              weeklyXpError={weeklyXpError}
-            />
+        {/* Final CTA */}
+        <section className="mx-auto max-w-4xl px-4 sm:px-6 mt-32 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8">Ready to Level Up?</h2>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href={DASHBOARD_URL}
+              className="w-full sm:w-auto rounded-lg bg-[#39ff88] px-8 py-4 text-center font-bold text-black hover:bg-[#2ce073] transition"
+            >
+              Open Dashboard
+            </Link>
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto rounded-lg border border-white/10 bg-white/5 px-8 py-4 text-center font-bold text-white hover:bg-white/10 transition"
+            >
+              View GitHub Repo
+            </a>
+            <a
+              href={CASE_STUDY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto rounded-lg border border-white/10 bg-white/5 px-8 py-4 text-center font-bold text-white hover:bg-white/10 transition"
+            >
+              Read Case Study
+            </a>
+          </div>
+        </section>
 
-            <XpBySource
-              xpSourceData={xpSourceData}
-              xpSourceLoading={xpSourceLoading}
-              xpSourceError={xpSourceError}
-            />
-          </aside>
-        </div>
       </div>
     </main>
   );
