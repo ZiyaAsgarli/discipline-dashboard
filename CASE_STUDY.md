@@ -149,7 +149,7 @@ Because the dashboard is intended for daily personal use, it was crucial that us
 
 Implementation included:
 - A `manifest.json` file configuring the app name, theme, and background colors.
-- Custom app icons generated for home screens and splash screens.
+- Custom app icons generated for home screens and splash screens. To avoid generic browser-style fallback icons, a branded dark/neon green icon system was created, significantly improving the perceived product quality and mobile app feel.
 - Next.js viewport and metadata tags configured for `appleWebApp` capabilities.
 - Enforcing `standalone` display mode to hide the browser URL bar entirely.
 

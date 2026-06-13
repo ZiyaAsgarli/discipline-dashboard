@@ -118,8 +118,8 @@ The dashboard features a heavily optimized, premium mobile-first redesign that t
 
 The application is configured as a Progressive Web App (PWA). It can be directly installed on mobile devices (via "Add to Home Screen" or "Install App" browser actions) to provide a true native-app feel.
 - **Web App Manifest**: Automatically provides app metadata.
-- **Mobile App Icon Assets**: Includes custom RPG-styled splash and home screen icons.
-- **Standalone Display Mode**: Opens without a browser URL bar to fully immerse the user.
+- **Custom Premium App Icon**: Includes a full suite of custom-designed icons (dark background with neon green brand styling) optimized for Android and iOS home screens.
+- **Standalone Display Mode**: Opens without a browser URL bar to fully immerse the user in a standalone app-like launch experience.
 - **Mobile-First Experience**: Combined with the mobile UX polish, this transforms the dashboard into an installable daily habit tracker.
 
 ## Code Architecture
