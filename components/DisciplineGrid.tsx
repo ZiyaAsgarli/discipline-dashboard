@@ -1,15 +1,19 @@
+import type { translations } from "@/lib/i18n/translations";
+
 export function DisciplineGrid({
   dailyCheckinsLoading,
   completedCheckinDays,
+  t,
 }: {
   dailyCheckinsLoading: boolean;
   completedCheckinDays: Set<number>;
+  t: typeof translations.en.app;
 }) {
   return (
     <section className="mt-6 rounded-xl border border-white/10 bg-[#101217] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.25)] md:p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-400 md:text-xs">
-          180-Day Grid
+          {t.campaign180}
         </h2>
         <span className="text-xs font-medium text-zinc-500">{completedCheckinDays.size}/180</span>
       </div>

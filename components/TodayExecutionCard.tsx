@@ -1,3 +1,5 @@
+import type { translations } from "@/lib/i18n/translations";
+
 export function TodayExecutionCard({
   currentLevel,
   currentLevelXp,
@@ -8,6 +10,7 @@ export function TodayExecutionCard({
   checkinMessage,
   checkinMessageType,
   onCompleteToday,
+  t,
 }: {
   currentLevel: string;
   currentLevelXp: number;
@@ -18,6 +21,7 @@ export function TodayExecutionCard({
   checkinMessage: string;
   checkinMessageType: "success" | "error" | "info";
   onCompleteToday: () => void;
+  t: typeof translations.en.app;
 }) {
   return (
     <section className="mt-4 rounded-xl border border-[#39ff88]/30 bg-gradient-to-b from-[#161a22] to-[#101217] p-5 shadow-[0_8px_30px_rgba(57,255,136,0.08)]">
@@ -25,7 +29,7 @@ export function TodayExecutionCard({
         {/* Header and Level Summary */}
         <div>
           <h2 className="text-xl font-bold text-white md:text-2xl">
-            {profileLoading ? "Loading..." : currentLevel}
+            {profileLoading ? "..." : currentLevel}
           </h2>
           
           <div className="mt-3">
@@ -49,7 +53,7 @@ export function TodayExecutionCard({
           onClick={onCompleteToday}
           type="button"
         >
-          {checkinLoading ? "Processing..." : "Complete Today"}
+          {checkinLoading ? "..." : t.completeToday}
         </button>
 
         {/* Status Message */}

@@ -1,3 +1,5 @@
+import type { translations } from "@/lib/i18n/translations";
+
 export function AnalyticsSummary({
   completionRate,
   xpEventsCount,
@@ -5,6 +7,7 @@ export function AnalyticsSummary({
   completedTasksCount,
   currentStreak,
   longestStreak,
+  t,
 }: {
   completionRate: number;
   xpEventsCount: number;
@@ -12,16 +15,17 @@ export function AnalyticsSummary({
   completedTasksCount: number;
   currentStreak: string | number;
   longestStreak: string | number;
+  t: typeof translations.en.app;
 }) {
   return (
     <div className="rounded-xl border border-white/5 bg-[#101217] p-4 shadow-sm md:p-6">
       <p className="text-[10px] font-semibold uppercase tracking-widest text-[#39ff88] md:text-xs">
-        Analytics Summary
+        {t.analyticsSummary}
       </p>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 md:mt-6 md:gap-4">
         <div className="flex flex-col rounded-lg border border-white/5 bg-[#14161c] p-3 md:p-4">
           <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 md:text-xs md:tracking-widest">
-            Completion Rate
+            {t.completionRate}
           </span>
           <span className="mt-1 text-lg font-bold text-white md:mt-2 md:text-xl">
             {completionRate}%
@@ -29,7 +33,7 @@ export function AnalyticsSummary({
         </div>
         <div className="flex flex-col rounded-lg border border-white/5 bg-[#14161c] p-3 md:p-4">
           <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 md:text-xs md:tracking-widest">
-            XP Events
+            {t.xpEvents}
           </span>
           <span className="mt-1 text-lg font-bold text-[#39ff88] md:mt-2 md:text-xl">
             {xpEventsCount}
@@ -37,7 +41,7 @@ export function AnalyticsSummary({
         </div>
         <div className="flex flex-col rounded-lg border border-white/5 bg-[#14161c] p-3 md:p-4">
           <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 md:text-xs md:tracking-widest">
-            Active Tasks
+            {t.activeTasks}
           </span>
           <span className="mt-1 text-lg font-bold text-white md:mt-2 md:text-xl">
             {activeTasksCount}
@@ -45,7 +49,7 @@ export function AnalyticsSummary({
         </div>
         <div className="flex flex-col rounded-lg border border-white/5 bg-[#14161c] p-3 md:p-4">
           <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 md:text-xs md:tracking-widest">
-            Completed Tasks
+            {t.completedTasks}
           </span>
           <span className="mt-1 text-lg font-bold text-white md:mt-2 md:text-xl">
             {completedTasksCount}
@@ -53,7 +57,7 @@ export function AnalyticsSummary({
         </div>
         <div className="flex flex-col rounded-lg border border-white/5 bg-[#14161c] p-3 md:p-4">
           <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 md:text-xs md:tracking-widest">
-            Current Streak
+            {t.currentStreak}
           </span>
           <span className="mt-1 text-lg font-bold text-white md:mt-2 md:text-xl">
             {currentStreak}
@@ -61,7 +65,7 @@ export function AnalyticsSummary({
         </div>
         <div className="flex flex-col rounded-lg border border-white/5 bg-[#14161c] p-3 md:p-4">
           <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 md:text-xs md:tracking-widest">
-            Longest Streak
+            {t.longestStreak}
           </span>
           <span className="mt-1 text-lg font-bold text-[#39ff88] md:mt-2 md:text-xl">
             {longestStreak}

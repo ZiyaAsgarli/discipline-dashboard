@@ -1,3 +1,6 @@
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import type { Language, translations } from "@/lib/i18n/translations";
+
 export function DashboardHeader({
   displayName,
   currentLevel,
@@ -6,6 +9,9 @@ export function DashboardHeader({
   dailyCheckinsError,
   strategicTasksError,
   onSignOut,
+  t,
+  language,
+  onLanguageChange,
 }: {
   displayName: string;
   currentLevel: string;
@@ -14,20 +20,23 @@ export function DashboardHeader({
   dailyCheckinsError: string;
   strategicTasksError: string;
   onSignOut: () => void;
+  t: typeof translations.en.app;
+  language: Language;
+  onLanguageChange: (lang: Language) => void;
 }) {
   return (
     <header className="flex flex-row items-start justify-between pb-4 sm:items-center sm:pb-6">
       <div className="flex flex-col gap-1">
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#39ff88] md:text-xs">
-          180-Day Campaign
+          {t.campaign180}
         </p>
         <h1 className="text-xl font-bold text-white md:text-3xl">
-          Discipline Dashboard
+          {t.disciplineDashboard}
         </h1>
         <p className="text-xs font-medium text-[#baffd2] md:text-sm">
           {profileLoading
-            ? "Loading profile data..."
-            : `Welcome back, ${displayName}`}
+            ? "..."
+            : `${t.welcomeBack}, ${displayName}`}
         </p>
         {profileError && <p className="text-xs text-rose-200">{profileError}</p>}
         {dailyCheckinsError && <p className="text-xs text-rose-200">{dailyCheckinsError}</p>}
@@ -35,15 +44,18 @@ export function DashboardHeader({
       </div>
 
       <div className="flex flex-col items-end gap-2">
-        <div className="hidden rounded-full border border-[#39ff88]/30 bg-[#39ff88]/10 px-3 py-1 text-[10px] font-medium text-[#baffd2] md:block md:text-xs">
-          {currentLevel}
+        <div className="flex items-center gap-3">
+          <LanguageSwitcher language={language} onLanguageChange={onLanguageChange} />
+          <div className="hidden rounded-full border border-[#39ff88]/30 bg-[#39ff88]/10 px-3 py-1 text-[10px] font-medium text-[#baffd2] md:block md:text-xs">
+            {currentLevel}
+          </div>
         </div>
         <button
           className="text-xs font-semibold text-zinc-500 transition hover:text-zinc-300 md:rounded-md md:border md:border-white/10 md:bg-white/[0.04] md:px-3 md:py-1.5"
           onClick={onSignOut}
           type="button"
         >
-          Sign Out
+          {t.signOut}
         </button>
       </div>
     </header>

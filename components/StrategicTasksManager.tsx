@@ -1,4 +1,5 @@
 import type { StrategicTask, TaskFilter } from "./types";
+import type { translations } from "@/lib/i18n/translations";
 
 function getPriorityTone(priority: StrategicTask["priority"]) {
   if (priority === "High") {
@@ -36,6 +37,7 @@ export function StrategicTasksManager({
   handleCompleteStrategicTask,
   handleUpdateTaskStatus,
   handleDeleteArchivedTask,
+  t,
 }: {
   taskFilters: { label: string; value: TaskFilter }[];
   selectedTaskFilter: TaskFilter;
@@ -65,6 +67,7 @@ export function StrategicTasksManager({
     status: StrategicTask["status"],
   ) => void;
   handleDeleteArchivedTask: (task: StrategicTask) => void;
+  t: typeof translations.en.app;
 }) {
   return (
     <div>
@@ -73,7 +76,7 @@ export function StrategicTasksManager({
           Mission Board
         </p>
         <h2 className="mt-2 text-2xl font-semibold text-white">
-          Strategic Tasks Manager
+          {t.strategicTasks}
         </h2>
       </div>
 
@@ -100,7 +103,7 @@ export function StrategicTasksManager({
             className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white outline-none transition placeholder:text-zinc-600 focus:border-[#39ff88]/60 md:py-2 md:text-sm"
             disabled={taskFormLoading}
             onChange={(event) => setTaskTitle(event.target.value)}
-            placeholder="Task title"
+            placeholder={t.taskTitle}
             type="text"
             value={taskTitle}
           />
@@ -108,7 +111,7 @@ export function StrategicTasksManager({
             className="min-h-12 w-full resize-none rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white outline-none transition placeholder:text-zinc-600 focus:border-[#39ff88]/60 md:min-h-20 md:py-2 md:text-sm"
             disabled={taskFormLoading}
             onChange={(event) => setTaskDescription(event.target.value)}
-            placeholder="Description (optional)"
+            placeholder={t.description}
             value={taskDescription}
           />
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3">
@@ -128,7 +131,7 @@ export function StrategicTasksManager({
               className="rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-white outline-none transition placeholder:text-zinc-600 focus:border-[#39ff88]/60 md:px-3 md:py-2 md:text-sm"
               disabled={taskFormLoading}
               onChange={(event) => setTaskCategory(event.target.value)}
-              placeholder="Category"
+              placeholder={t.category}
               type="text"
               value={taskCategory}
             />
@@ -148,7 +151,7 @@ export function StrategicTasksManager({
             onClick={handleAddStrategicTask}
             type="button"
           >
-            {taskFormLoading ? "Adding..." : "Add Task"}
+            {taskFormLoading ? "..." : t.addTask}
           </button>
         </div>
 
@@ -185,7 +188,7 @@ export function StrategicTasksManager({
         filteredStrategicTasks.length === 0 ? (
           <div className="rounded-lg border border-white/10 bg-[#101217] p-4 text-xs leading-5 text-zinc-400">
             <p className="font-medium text-zinc-300">
-              No tasks in this status yet.
+              {t.noTasksYet}
             </p>
           </div>
         ) : null}

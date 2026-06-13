@@ -1,26 +1,29 @@
 import type { XpEvent } from "./types";
+import type { translations } from "@/lib/i18n/translations";
 
 export function RecentXpActivity({
   xpEvents,
   xpEventsLoading,
   xpEventsError,
   formatActivityDate,
+  t,
 }: {
   xpEvents: XpEvent[];
   xpEventsLoading: boolean;
   xpEventsError: string;
   formatActivityDate: (date: string) => string;
+  t: typeof translations.en.app;
 }) {
   return (
     <div className="rounded-xl border border-white/5 bg-[#101217] p-4 shadow-sm md:p-6">
       <p className="text-[10px] font-semibold uppercase tracking-widest text-[#39ff88] md:text-xs">
-        Recent XP Activity
+        {t.recentXp}
       </p>
 
       <div className="mt-3 space-y-2 md:mt-4 md:space-y-3">
         {xpEventsLoading ? (
           <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3 text-xs text-zinc-400 md:p-4 md:text-sm">
-            Loading recent XP activity...
+            ...
           </div>
         ) : null}
 
@@ -32,7 +35,7 @@ export function RecentXpActivity({
 
         {!xpEventsLoading && !xpEventsError && xpEvents.length === 0 ? (
           <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3 text-xs leading-5 text-zinc-400 md:p-4 md:text-sm md:leading-6">
-            <p className="font-medium text-zinc-300">No XP activity yet.</p>
+            <p className="font-medium text-zinc-300">{t.noXpYet}</p>
           </div>
         ) : null}
 

@@ -1,3 +1,6 @@
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import type { Language, translations } from "@/lib/i18n/translations";
+
 export function AuthPanel({
   email,
   password,
@@ -8,6 +11,9 @@ export function AuthPanel({
   authError,
   onSignIn,
   onSignUp,
+  t,
+  language,
+  onLanguageChange,
 }: {
   email: string;
   password: string;
@@ -18,14 +24,20 @@ export function AuthPanel({
   authError: string;
   onSignIn: () => void;
   onSignUp: () => void;
+  t: typeof translations.en.app;
+  language: Language;
+  onLanguageChange: (lang: Language) => void;
 }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#07080a] px-5 text-zinc-100">
       <section className="w-full max-w-md rounded-lg border border-white/10 bg-[#101217] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.36)]">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
-          Discipline Dashboard
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold text-white">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
+            {t.disciplineDashboard}
+          </p>
+          <LanguageSwitcher language={language} onLanguageChange={onLanguageChange} />
+        </div>
+        <h1 className="mt-1 text-3xl font-semibold text-white">
           Enter the campaign
         </h1>
         <p className="mt-3 text-sm leading-6 text-zinc-400">
@@ -38,7 +50,7 @@ export function AuthPanel({
 
         <div className="mt-6 space-y-4">
           <label className="block">
-            <span className="text-sm font-medium text-zinc-300">Email</span>
+            <span className="text-sm font-medium text-zinc-300">{t.email}</span>
             <input
               autoComplete="email"
               className="mt-2 w-full rounded-md border border-white/10 bg-black/30 px-4 py-3 text-white outline-none transition focus:border-[#39ff88]/60"
@@ -51,7 +63,7 @@ export function AuthPanel({
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-zinc-300">Password</span>
+            <span className="text-sm font-medium text-zinc-300">{t.password}</span>
             <input
               autoComplete="current-password"
               className="mt-2 w-full rounded-md border border-white/10 bg-black/30 px-4 py-3 text-white outline-none transition focus:border-[#39ff88]/60"
@@ -77,7 +89,7 @@ export function AuthPanel({
             onClick={onSignIn}
             type="button"
           >
-            {authLoading === "sign-in" ? "Signing In..." : "Sign In"}
+            {authLoading === "sign-in" ? "..." : t.signIn}
           </button>
           <button
             className="rounded-md border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
@@ -85,7 +97,7 @@ export function AuthPanel({
             onClick={onSignUp}
             type="button"
           >
-            {authLoading === "sign-up" ? "Signing Up..." : "Sign Up"}
+            {authLoading === "sign-up" ? "..." : t.signUp}
           </button>
         </div>
 

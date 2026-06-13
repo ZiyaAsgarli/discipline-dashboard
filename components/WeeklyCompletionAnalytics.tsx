@@ -1,17 +1,21 @@
 import type { WeeklyCompletionData } from "./types";
 
+import type { translations } from "@/lib/i18n/translations";
+
 export function WeeklyCompletionAnalytics({
   last7DaysCompletion,
   weeklyCompletedCount,
+  t,
 }: {
   last7DaysCompletion: WeeklyCompletionData[];
   weeklyCompletedCount: number;
+  t: typeof translations.en.app;
 }) {
   return (
     <div className="rounded-xl border border-white/5 bg-[#101217] p-4 shadow-sm md:p-6">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#39ff88] md:text-xs">
-        Weekly Completion
-      </p>
+      <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#39ff88] md:text-xs">
+        {t.weeklyCompletion}
+      </h3>
 
       <div className="mt-4 flex flex-col gap-3 md:mt-5 md:gap-4">
         <div className="grid grid-cols-7 gap-1 md:gap-2">

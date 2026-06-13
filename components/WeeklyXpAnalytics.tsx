@@ -7,26 +7,29 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { WeeklyXpData } from "./types";
+import type { translations } from "@/lib/i18n/translations";
 
 export function WeeklyXpAnalytics({
   weeklyXpData,
   weeklyXpLoading,
   weeklyXpError,
+  t,
 }: {
   weeklyXpData: WeeklyXpData[];
   weeklyXpLoading: boolean;
   weeklyXpError: string;
+  t: typeof translations.en.app;
 }) {
   return (
     <div className="rounded-xl border border-white/5 bg-[#101217] p-4 shadow-sm md:p-6">
       <p className="text-[10px] font-semibold uppercase tracking-widest text-[#39ff88] md:text-xs">
-        Weekly XP Analytics
+        {t.weeklyXp}
       </p>
 
       <div className="mt-4 h-40 w-full md:mt-5 md:h-56">
         {weeklyXpLoading ? (
           <div className="flex h-full items-center justify-center rounded-lg border border-white/5 bg-white/[0.02] text-xs text-zinc-400 md:text-sm">
-            Loading chart...
+            ...
           </div>
         ) : weeklyXpError ? (
           <div className="flex h-full items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 text-xs text-rose-100 md:text-sm">
@@ -34,7 +37,7 @@ export function WeeklyXpAnalytics({
           </div>
         ) : weeklyXpData.length === 0 ? (
           <div className="flex h-full items-center justify-center rounded-lg border border-white/5 bg-white/[0.02] text-xs text-zinc-400 md:text-sm">
-            No data available.
+            {t.noXpYet}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">

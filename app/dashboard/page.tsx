@@ -12,6 +12,7 @@ import type {
   WeeklyXpData,
   XpSourceData,
 } from "@/components/types";
+import { useLanguage } from "@/lib/i18n/useLanguage";
 import { AuthPanel } from "@/components/AuthPanel";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { StatCards } from "@/components/StatCards";
@@ -90,6 +91,7 @@ async function upsertProfile(
 }
 
 export default function Home() {
+  const { language, changeLanguage, t, mounted } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
   const [authLoading, setAuthLoading] = useState<"sign-in" | "sign-up" | null>(
@@ -1385,18 +1387,14 @@ export default function Home() {
     }
   }
 
-  const databaseStatusText =
-    databaseStatus === "loading"
-      ? "Checking..."
-      : databaseStatus === "connected"
-        ? "Connected"
-        : "Error";
   const displayName = profile?.display_name ?? user?.email ?? "Commander";
   const currentLevel = profileLoading
     ? "Loading..."
     : `Level ${profileLevel}: ${levelTitle}`;
   const currentLevelXp = profileLoading ? 0 : getCurrentLevelXp(profile?.total_xp ?? 0);
   const progressPercent = profileLoading ? 0 : getLevelProgressPercent(profile?.total_xp ?? 0);
+
+  if (!mounted) return null;
 
   if (authChecking || !user) {
     return (
@@ -1410,6 +1408,9 @@ export default function Home() {
         authError={authError}
         onSignIn={handleSignIn}
         onSignUp={handleSignUp}
+        t={t.app}
+        language={language}
+        onLanguageChange={changeLanguage}
       />
     );
   }
@@ -1425,9 +1426,19 @@ export default function Home() {
           dailyCheckinsError={dailyCheckinsError}
           strategicTasksError={strategicTasksError}
           onSignOut={handleSignOut}
+          t={t.app}
+          language={language}
+          onLanguageChange={changeLanguage}
         />
 
-        <DatabaseStatusCard databaseStatusText={databaseStatusText} />
+        <DatabaseStatusCard 
+          status={databaseStatus} 
+          statusText={
+            databaseStatus === "connected" ? t.app.dbConnected : 
+            databaseStatus === "loading" ? "Checking..." : 
+            "Error"
+          } 
+        />
 
         {/* Mobile Main Action Area */}
         <div className="mt-4 md:mt-8">
@@ -1441,28 +1452,29 @@ export default function Home() {
             checkinMessage={checkinMessage}
             checkinMessageType={checkinMessageType}
             onCompleteToday={handleCompleteToday}
+            t={t.app}
           />
         </div>
 
         <StatCards
           stats={[
             {
-              label: "Current Level",
+              label: t.app.currentLevel,
               value: profileLoading ? "..." : String(profileLevel),
-              detail: profileLoading ? "Loading" : levelTitle,
+              detail: profileLoading ? "..." : levelTitle,
             },
             {
-              label: "Total XP",
+              label: t.app.totalXp,
               value: profileLoading ? "..." : String(profile?.total_xp ?? 0),
               detail: "Lifetime earnings",
             },
             {
-              label: "Completed Days",
+              label: t.app.completedDays,
               value: dailyCheckinsLoading ? "..." : String(completedCheckinDays.size),
-              detail: "180-Day Grid",
+              detail: t.app.campaign180,
             },
             {
-              label: "Active Tasks",
+              label: t.app.activeTasks,
               value: strategicTasksLoading ? "..." : String(activeTasksCount),
               detail: "Strategic tasks",
             },
@@ -1498,11 +1510,13 @@ export default function Home() {
               handleCompleteStrategicTask={handleCompleteStrategicTask}
               handleUpdateTaskStatus={handleUpdateTaskStatus}
               handleDeleteArchivedTask={handleDeleteArchivedTask}
+              t={t.app}
             />
 
             <DisciplineGrid
               dailyCheckinsLoading={dailyCheckinsLoading}
               completedCheckinDays={completedCheckinDays}
+              t={t.app}
             />
 
             <RpgProgress
@@ -1517,6 +1531,7 @@ export default function Home() {
               xpEventsLoading={xpEventsLoading}
               xpEventsError={xpEventsError}
               formatActivityDate={formatActivityDate}
+              t={t.app}
             />
           </div>
 
@@ -1528,11 +1543,13 @@ export default function Home() {
               completedTasksCount={completedTasksCount}
               currentStreak={currentStreakLabel}
               longestStreak={longestStreakLabel}
+              t={t.app}
             />
             
             <WeeklyCompletionAnalytics
               last7DaysCompletion={last7DaysCompletion}
               weeklyCompletedCount={weeklyCompletedCount}
+              t={t.app}
             />
 
             <MonthlyAnalyticsOverview
@@ -1542,18 +1559,21 @@ export default function Home() {
               monthlyTasksCompleted={monthlyTasksCompleted}
               monthlyAnalyticsLoading={monthlyAnalyticsLoading}
               monthlyAnalyticsError={monthlyAnalyticsError}
+              t={t.app}
             />
 
             <WeeklyXpAnalytics
               weeklyXpData={weeklyXpData}
               weeklyXpLoading={weeklyXpLoading}
               weeklyXpError={weeklyXpError}
+              t={t.app}
             />
 
             <XpBySource
               xpSourceData={xpSourceData}
               xpSourceLoading={xpSourceLoading}
               xpSourceError={xpSourceError}
+              t={t.app}
             />
           </aside>
         </div>
