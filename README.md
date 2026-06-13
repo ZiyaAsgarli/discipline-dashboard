@@ -100,6 +100,33 @@ Discipline Dashboard is designed as both a personal operating system and a profe
 - BI-style analytics using Supabase-backed data
 - User-specific Row Level Security
 
+## Code Architecture
+
+The frontend follows a container-presentational pattern. The `app/page.tsx` file acts as the main container responsible for:
+
+- Supabase data fetching
+- State management
+- Auth handlers
+- XP, check-in, and task handlers
+- Analytics calculations
+
+Reusable presentational UI is split into modular components inside the `components/` directory. Shared TypeScript interfaces are centralized in `components/types.ts`.
+
+Important components include:
+
+- `AuthPanel`
+- `DashboardHeader`
+- `StatCards`
+- `DisciplineGrid`
+- `RpgProgress`
+- `StrategicTasksManager`
+- `RecentXpActivity`
+- `WeeklyXpAnalytics`
+- `XpBySource`
+- `WeeklyCompletionAnalytics`
+- `MonthlyAnalyticsOverview`
+- `AnalyticsSummary`
+
 ## Database Tables
 
 The planned Supabase PostgreSQL schema uses these core tables:

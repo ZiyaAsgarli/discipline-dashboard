@@ -47,6 +47,18 @@ This user needs a system that connects daily discipline with strategic portfolio
 
 The frontend is designed to be Vercel-ready, while Supabase provides authentication, database storage, and security policies.
 
+### Component Architecture
+
+The frontend uses a container-presentational pattern to ensure clean separation of concerns.
+
+Business logic stays centralized in `app/page.tsx`, which manages state, Supabase data fetching, auth handlers, and analytics calculations. The UI rendering is modularized into reusable presentational components located in the `components/` directory.
+
+This refactor improves:
+- **Maintainability**: Smaller, isolated components are easier to manage and update.
+- **Readability**: The main page acts as a clean orchestrator of logic, while presentational details are hidden behind semantic component names.
+- **Testability**: Pure UI components can be tested independently of data-fetching logic.
+- **Portfolio Quality**: Demonstrates best practices in modern React/Next.js architecture.
+
 ## 6. Database Design
 
 The database is organized around four core tables:
