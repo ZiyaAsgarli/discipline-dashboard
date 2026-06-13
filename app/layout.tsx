@@ -21,6 +21,16 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Discipline",
   },
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+      { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport = {
