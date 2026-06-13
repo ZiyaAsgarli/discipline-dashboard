@@ -2,64 +2,29 @@
 
 import type { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-
-type Profile = {
-  id: string;
-  email: string | null;
-  display_name: string | null;
-  total_xp: number;
-  current_level: number;
-  discipline_start_date: string | null;
-};
-
-type DailyCheckin = {
-  id: string;
-  campaign_day: number;
-  completed: boolean;
-};
-
-type ExistingDailyCheckin = Pick<DailyCheckin, "id" | "completed">;
-
-type StrategicTask = {
-  id: string;
-  title: string;
-  description: string | null;
-  category: string | null;
-  priority: "High" | "Medium" | "Low";
-  status: "active" | "completed" | "paused" | "archived";
-  xp_reward: number;
-  created_at: string;
-};
-
-type TaskFilter = "all" | StrategicTask["status"];
-
-type XpEvent = {
-  id: string;
-  description: string | null;
-  xp_amount: number;
-  source_type: string;
-  created_at: string;
-};
-
-type WeeklyXpData = {
-  dateLabel: string;
-  fullDate: string;
-  xp: number;
-};
-
-type XpSourceData = {
-  daily_checkin: number;
-  strategic_task: number;
-  manual_adjustment: number;
-};
+import type {
+  Profile,
+  DailyCheckin,
+  ExistingDailyCheckin,
+  StrategicTask,
+  TaskFilter,
+  XpEvent,
+  WeeklyXpData,
+  XpSourceData,
+} from "@/components/types";
+import { AuthPanel } from "@/components/AuthPanel";
+import { DashboardHeader } from "@/components/DashboardHeader";
+import { StatCards } from "@/components/StatCards";
+import { DatabaseStatusCard } from "@/components/DatabaseStatusCard";
+import { AnalyticsSummary } from "@/components/AnalyticsSummary";
+import { DisciplineGrid } from "@/components/DisciplineGrid";
+import { RpgProgress } from "@/components/RpgProgress";
+import { RecentXpActivity } from "@/components/RecentXpActivity";
+import { WeeklyXpAnalytics } from "@/components/WeeklyXpAnalytics";
+import { XpBySource } from "@/components/XpBySource";
+import { WeeklyCompletionAnalytics } from "@/components/WeeklyCompletionAnalytics";
+import { MonthlyAnalyticsOverview } from "@/components/MonthlyAnalyticsOverview";
+import { StrategicTasksManager } from "@/components/StrategicTasksManager";
 
 async function getSupabase() {
   const { supabase } = await import("@/lib/supabaseClient");
@@ -100,17 +65,7 @@ function validateCredentials(email: string, password: string) {
   return "";
 }
 
-function getPriorityTone(priority: StrategicTask["priority"]) {
-  if (priority === "High") {
-    return "border-rose-400/40 bg-rose-500/10 text-rose-200";
-  }
 
-  if (priority === "Medium") {
-    return "border-amber-300/40 bg-amber-300/10 text-amber-100";
-  }
-
-  return "border-[#39ff88]/40 bg-[#39ff88]/10 text-[#baffd2]";
-}
 
 function getLevelTitle(level: number): string {
   const levelTitles: Record<number, string> = {
@@ -323,67 +278,7 @@ export default function Home() {
     { label: "Archived", value: "archived" },
   ];
 
-  const stats = [
-    {
-      label: "Current Level",
-      value: profileLoading
-        ? "Loading..."
-        : `Level ${profileLevel}`,
-      detail: levelTitle,
-    },
-    {
-      label: "Total XP",
-      value: profileLoading ? "Loading..." : `${profile?.total_xp ?? 0} XP`,
-      detail: "1000 XP to level up",
-    },
-    {
-      label: "Completed Days",
-      value: dailyCheckinsLoading
-        ? "Loading..."
-        : `${completedCheckinsCount} / 180`,
-      detail: "Campaign progress",
-    },
-    {
-      label: "Strategic Tasks",
-      value: strategicTasksLoading
-        ? "Loading..."
-        : `${activeTasksCount} Active`,
-      detail: "Mission queue",
-    },
-  ];
 
-  const analyticsSummary = [
-    {
-      label: "Completion Rate",
-      value: dailyCheckinsLoading ? "Loading..." : `${completionRate}%`,
-      detail: "Discipline grid",
-    },
-    {
-      label: "XP Events",
-      value: xpEventsLoading ? "Loading..." : `${xpEventsCount}`,
-      detail: "All recorded activity",
-    },
-    {
-      label: "Current Streak",
-      value: dailyCheckinsLoading ? "Loading..." : currentStreakLabel,
-      detail: "Latest completed run",
-    },
-    {
-      label: "Longest Streak",
-      value: dailyCheckinsLoading ? "Loading..." : longestStreakLabel,
-      detail: "Best campaign run",
-    },
-    {
-      label: "Completed Tasks",
-      value: strategicTasksLoading ? "Loading..." : `${completedTasksCount}`,
-      detail: "Finished missions",
-    },
-    {
-      label: "Active Tasks",
-      value: strategicTasksLoading ? "Loading..." : `${activeTasksCount}`,
-      detail: "Open missions",
-    },
-  ];
 
   useEffect(() => {
     let isMounted = true;
@@ -1634,843 +1529,152 @@ export default function Home() {
 
   if (authChecking || !user) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#07080a] px-5 text-zinc-100">
-        <section className="w-full max-w-md rounded-lg border border-white/10 bg-[#101217] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.36)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
-            Discipline Dashboard
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold text-white">
-            Enter the campaign
-          </h1>
-          <p className="mt-3 text-sm leading-6 text-zinc-400">
-            Sign in or create an account to unlock your personal RPG discipline
-            dashboard.
-          </p>
-          <p className="mt-3 rounded-md border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-6 text-zinc-400">
-            Use email and password to access your personal dashboard.
-          </p>
-
-          <div className="mt-6 space-y-4">
-            <label className="block">
-              <span className="text-sm font-medium text-zinc-300">Email</span>
-              <input
-                autoComplete="email"
-                className="mt-2 w-full rounded-md border border-white/10 bg-black/30 px-4 py-3 text-white outline-none transition focus:border-[#39ff88]/60"
-                disabled={authChecking || authLoading !== null}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
-                type="email"
-                value={email}
-              />
-            </label>
-
-            <label className="block">
-              <span className="text-sm font-medium text-zinc-300">
-                Password
-              </span>
-              <input
-                autoComplete="current-password"
-                className="mt-2 w-full rounded-md border border-white/10 bg-black/30 px-4 py-3 text-white outline-none transition focus:border-[#39ff88]/60"
-                disabled={authChecking || authLoading !== null}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="••••••••"
-                type="password"
-                value={password}
-              />
-            </label>
-          </div>
-
-          {authError ? (
-            <div className="mt-5 rounded-md border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-              {authError}
-            </div>
-          ) : null}
-
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <button
-              className="rounded-md border border-[#39ff88]/40 bg-[#39ff88] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[#7cffaa] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={authChecking || authLoading !== null}
-              onClick={handleSignIn}
-              type="button"
-            >
-              {authLoading === "sign-in" ? "Signing In..." : "Sign In"}
-            </button>
-            <button
-              className="rounded-md border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={authChecking || authLoading !== null}
-              onClick={handleSignUp}
-              type="button"
-            >
-              {authLoading === "sign-up" ? "Signing Up..." : "Sign Up"}
-            </button>
-          </div>
-
-          {authChecking ? (
-            <p className="mt-5 text-sm text-zinc-500">
-              Checking your session...
-            </p>
-          ) : null}
-        </section>
-      </main>
+      <AuthPanel
+        email={email}
+        password={password}
+        setEmail={setEmail}
+        setPassword={setPassword}
+        authChecking={authChecking}
+        authLoading={authLoading}
+        authError={authError}
+        onSignIn={handleSignIn}
+        onSignUp={handleSignUp}
+      />
     );
   }
 
   return (
     <main className="min-h-screen bg-[#07080a] text-zinc-100">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-6 sm:px-8 lg:px-10">
-        <header className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
-              180-Day Campaign
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold text-white sm:text-5xl">
-              Discipline Dashboard
-            </h1>
-            <p className="mt-3 text-sm font-medium text-[#baffd2]">
-              {profileLoading
-                ? "Loading profile data..."
-                : `Welcome back, ${displayName}`}
-            </p>
-            {profileError ? (
-              <p className="mt-2 text-sm text-rose-200">{profileError}</p>
-            ) : null}
-            {dailyCheckinsError ? (
-              <p className="mt-2 text-sm text-rose-200">
-                {dailyCheckinsError}
-              </p>
-            ) : null}
-            {strategicTasksError ? (
-              <p className="mt-2 text-sm text-rose-200">
-                {strategicTasksError}
-              </p>
-            ) : null}
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400 sm:text-base">
-              Build discipline like an RPG character: complete the day, earn
-              the identity, protect the streak, and keep moving.
-            </p>
+        <DashboardHeader
+          displayName={displayName}
+          currentLevel={currentLevel}
+          profileLoading={profileLoading}
+          profileError={profileError}
+          dailyCheckinsError={dailyCheckinsError}
+          strategicTasksError={strategicTasksError}
+          onSignOut={handleSignOut}
+        />
+
+        <StatCards
+          stats={[
+            {
+              label: "Current Level",
+              value: profileLoading ? "..." : String(profileLevel),
+              detail: profileLoading ? "Loading" : levelTitle,
+            },
+            {
+              label: "Total XP",
+              value: profileLoading ? "..." : String(profile?.total_xp ?? 0),
+              detail: "Lifetime earnings",
+            },
+            {
+              label: "Completed Days",
+              value: dailyCheckinsLoading ? "..." : String(completedCheckinDays.size),
+              detail: "180-Day Grid",
+            },
+            {
+              label: "Active Tasks",
+              value: strategicTasksLoading ? "..." : String(activeTasksCount),
+              detail: "Strategic tasks",
+            },
+          ]}
+        />
+
+        <DatabaseStatusCard databaseStatusText={databaseStatusText} />
+
+        <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex w-full flex-col gap-8 lg:w-2/3">
+            <AnalyticsSummary
+              completionRate={completionRate}
+              xpEventsCount={xpEventsCount}
+              activeTasksCount={activeTasksCount}
+              completedTasksCount={completedTasksCount}
+              currentStreak={currentStreakLabel}
+              longestStreak={longestStreakLabel}
+            />
+
+            <DisciplineGrid
+              dailyCheckinsLoading={dailyCheckinsLoading}
+              completedCheckinDays={completedCheckinDays}
+              checkinLoading={checkinLoading}
+              checkinMessage={checkinMessage}
+              checkinMessageType={checkinMessageType}
+              onCompleteToday={handleCompleteToday}
+            />
+
+            <RpgProgress
+              currentLevel={currentLevel}
+              currentLevelXp={currentLevelXp}
+              progressPercent={progressPercent}
+              profileLoading={profileLoading}
+            />
+
+            <RecentXpActivity
+              xpEvents={xpEvents}
+              xpEventsLoading={xpEventsLoading}
+              xpEventsError={xpEventsError}
+              formatActivityDate={formatActivityDate}
+            />
           </div>
-          <div className="flex flex-col gap-3 sm:items-end">
-            <div className="rounded-md border border-[#39ff88]/30 bg-[#39ff88]/10 px-4 py-3 text-sm font-medium text-[#baffd2] shadow-[0_0_30px_rgba(57,255,136,0.08)]">
-              {currentLevel}
-            </div>
-            <button
-              className="rounded-md border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-white/[0.08]"
-              onClick={handleSignOut}
-              type="button"
-            >
-              Sign Out
-            </button>
-          </div>
-        </header>
 
-        <div className="space-y-6 py-8">
-          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {stats.map((stat) => (
-              <article
-                className="rounded-lg border border-white/10 bg-[#101217] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.24)]"
-                key={stat.label}
-              >
-                <p className="text-sm font-medium text-zinc-400">
-                  {stat.label}
-                </p>
-                <h2 className="mt-3 text-3xl font-semibold text-white">
-                  {stat.value}
-                </h2>
-                <p className="mt-3 text-sm text-zinc-500">{stat.detail}</p>
-              </article>
-            ))}
-          </section>
+          <aside className="flex w-full flex-col gap-8 lg:w-1/3">
+            <WeeklyXpAnalytics
+              weeklyXpData={weeklyXpData}
+              weeklyXpLoading={weeklyXpLoading}
+              weeklyXpError={weeklyXpError}
+            />
 
-          <section className="rounded-lg border border-white/10 bg-[#101116] p-5 sm:p-6">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
-                  Analytics Summary
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">
-                  Campaign Signals
-                </h2>
-              </div>
-            </div>
+            <XpBySource
+              xpSourceData={xpSourceData}
+              xpSourceLoading={xpSourceLoading}
+              xpSourceError={xpSourceError}
+            />
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-              {analyticsSummary.map((metric) => (
-                <article
-                  className="rounded-lg border border-white/10 bg-[#14161c] p-4"
-                  key={metric.label}
-                >
-                  <p className="text-sm font-medium text-zinc-400">
-                    {metric.label}
-                  </p>
-                  <h3 className="mt-3 text-2xl font-semibold text-[#39ff88]">
-                    {metric.value}
-                  </h3>
-                  <p className="mt-2 text-sm text-zinc-500">
-                    {metric.detail}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </section>
+            <WeeklyCompletionAnalytics
+              last7DaysCompletion={last7DaysCompletion}
+              weeklyCompletedCount={weeklyCompletedCount}
+            />
 
-          <section className="rounded-lg border border-white/10 bg-[#101217] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.18)] sm:max-w-sm">
-            <p className="text-sm font-medium text-zinc-400">
-              Database Status
-            </p>
-            <div className="mt-3 flex items-center gap-3">
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${
-                  databaseStatus === "connected"
-                    ? "bg-[#39ff88] shadow-[0_0_14px_rgba(57,255,136,0.55)]"
-                    : databaseStatus === "error"
-                      ? "bg-rose-500"
-                      : "bg-zinc-500"
-                }`}
-              />
-              <h2 className="text-2xl font-semibold text-white">
-                {databaseStatusText}
-              </h2>
-            </div>
-          </section>
+            <MonthlyAnalyticsOverview
+              monthlyCompletedDays={monthlyCompletedDays}
+              monthlyCompletionRate={monthlyCompletionRate}
+              monthlyXpEarned={monthlyXpEarned}
+              monthlyTasksCompleted={monthlyTasksCompleted}
+              monthlyAnalyticsLoading={monthlyAnalyticsLoading}
+              monthlyAnalyticsError={monthlyAnalyticsError}
+            />
+          </aside>
+        </div>
 
-          <section className="rounded-lg border border-white/10 bg-[#101116] p-5 sm:p-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
-                  Discipline Streak Map
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">
-                  180-Day Discipline Grid
-                </h2>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-500">
-                  Each green cell represents a completed discipline day.
-                </p>
-              </div>
-              <div className="flex flex-col gap-3 sm:items-end">
-                <button
-                  className="rounded-md border border-[#39ff88]/40 bg-[#39ff88] px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#7cffaa] disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={checkinLoading || profileLoading}
-                  onClick={handleCompleteToday}
-                  type="button"
-                >
-                  {checkinLoading ? "Completing..." : "Complete Today"}
-                </button>
-                <div className="flex gap-4 text-sm text-zinc-400">
-                  <span className="flex items-center gap-2">
-                    <span className="h-3 w-3 rounded-[2px] bg-[#39ff88]" />
-                    Complete
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className="h-3 w-3 rounded-[2px] bg-[#451117]" />
-                    Incomplete
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {checkinMessage ? (
-              <div
-                className={`mt-5 rounded-md border px-4 py-3 text-sm ${
-                  checkinMessageType === "success"
-                    ? "border-[#39ff88]/30 bg-[#39ff88]/10 text-[#baffd2]"
-                    : checkinMessageType === "error"
-                      ? "border-rose-400/30 bg-rose-500/10 text-rose-100"
-                      : "border-white/10 bg-white/[0.04] text-zinc-300"
-                }`}
-              >
-                {checkinMessage}
-              </div>
-            ) : null}
-
-            <div className="mt-6 grid grid-cols-[repeat(15,minmax(0,1fr))] gap-1 sm:grid-cols-[repeat(18,minmax(0,1fr))] md:grid-cols-[repeat(20,minmax(0,1fr))] lg:grid-cols-[repeat(30,minmax(0,1fr))]">
-              {Array.from({ length: 180 }, (_, index) => {
-                const day = index + 1;
-                const isComplete = completedCheckinDays.has(day);
-
-                return (
-                  <div
-                    aria-label={`Day ${day}: ${
-                      isComplete ? "completed" : "incomplete"
-                    }`}
-                    className={`aspect-square rounded-[3px] border ${
-                      isComplete
-                        ? "border-[#7cffaa]/70 bg-[#39ff88] shadow-[0_0_16px_rgba(57,255,136,0.35)]"
-                        : "border-red-950/70 bg-[#451117]"
-                    }`}
-                    key={day}
-                    title={`Day ${day}`}
-                  />
-                );
-              })}
-            </div>
-          </section>
-
-          <section className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)]">
-            <div className="space-y-6">
-              <div className="rounded-lg border border-[#39ff88]/20 bg-[#101217] p-6 shadow-[0_0_40px_rgba(57,255,136,0.06)]">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
-                  RPG Progress
-                </p>
-                <h2 className="mt-3 text-3xl font-semibold text-white">
-                  {currentLevel}
-                </h2>
-                <div className="mt-6">
-                  <div className="flex items-center justify-between text-sm text-zinc-400">
-                    <span>
-                      {profileLoading ? "Loading..." : `${currentLevelXp} XP`}
-                    </span>
-                    <span>1000 XP</span>
-                  </div>
-                  <div className="mt-3 h-4 overflow-hidden rounded-md border border-white/10 bg-black/50">
-                    <div
-                      className="h-full rounded-md bg-[#39ff88] shadow-[0_0_18px_rgba(57,255,136,0.45)]"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                </div>
-                <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-300">
-                  Every completed day is a stat point. Stay consistent long
-                  enough and the character sheet becomes real life.
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-[#39ff88]/15 bg-[#101116] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
-                  Recent XP Activity
-                </p>
-
-                <div className="mt-5 space-y-3">
-                  {xpEventsLoading ? (
-                    <div className="rounded-md border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-400">
-                      Loading recent XP activity...
-                    </div>
-                  ) : null}
-
-                  {!xpEventsLoading && xpEventsError ? (
-                    <div className="rounded-md border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-                      {xpEventsError}
-                    </div>
-                  ) : null}
-
-                  {!xpEventsLoading &&
-                  !xpEventsError &&
-                  xpEvents.length === 0 ? (
-                    <div className="rounded-md border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-zinc-400">
-                      <p className="font-medium text-zinc-300">
-                        No XP activity yet.
-                      </p>
-                      <p className="mt-1 text-zinc-500">
-                        Complete a daily check-in or strategic task to start
-                        building your XP history.
-                      </p>
-                    </div>
-                  ) : null}
-
-                  {!xpEventsLoading &&
-                    xpEvents.map((event) => (
-                      <article
-                        className="rounded-md border border-white/10 bg-[#14161c] p-4"
-                        key={event.id}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <h3 className="text-sm font-semibold text-white">
-                              {event.description || "XP event"}
-                            </h3>
-                            <p className="mt-2 text-xs uppercase tracking-[0.12em] text-zinc-500">
-                              {event.source_type}
-                            </p>
-                          </div>
-                          <span className="shrink-0 rounded-md border border-[#39ff88]/25 bg-[#39ff88]/10 px-3 py-1 text-sm font-semibold text-[#39ff88] shadow-[0_0_16px_rgba(57,255,136,0.08)]">
-                            {event.xp_amount > 0 ? "+" : ""}
-                            {event.xp_amount} XP
-                          </span>
-                        </div>
-                        <p className="mt-3 text-xs text-zinc-500">
-                          {formatActivityDate(event.created_at)}
-                        </p>
-                      </article>
-                    ))}
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-[#39ff88]/15 bg-[#101116] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
-                  Weekly Completion Analytics
-                </p>
-                <p className="mt-2 text-sm text-zinc-400">
-                  Daily completion status for the last 7 days.
-                </p>
-
-                <div className="mt-6 flex flex-col gap-4">
-                  <div className="grid grid-cols-7 gap-2">
-                    {last7DaysCompletion.map((day) => (
-                      <div
-                        key={day.fullDate}
-                        className="flex flex-col items-center gap-2"
-                      >
-                        <div
-                          className={`flex h-10 w-full items-center justify-center rounded-md border text-sm font-semibold transition-all ${
-                            day.completed
-                              ? "border-[#7cffaa]/70 bg-[#39ff88] text-black shadow-[0_0_16px_rgba(57,255,136,0.35)]"
-                              : "border-red-950/70 bg-[#451117] text-rose-500/50"
-                          }`}
-                          title={day.fullDate}
-                        >
-                          {day.completed ? "✓" : "✗"}
-                        </div>
-                        <span className="text-xs font-medium uppercase tracking-widest text-zinc-500">
-                          {day.dateLabel}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-center text-sm font-medium text-zinc-300">
-                    {weeklyCompletedCount} / 7 days completed
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-[#39ff88]/15 bg-[#101116] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
-                  Weekly XP Analytics
-                </p>
-                <p className="mt-2 text-sm text-zinc-400">
-                  XP earned over the last 7 days.
-                </p>
-
-                <div className="mt-6 h-64 w-full">
-                  {weeklyXpLoading ? (
-                    <div className="flex h-full items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-sm text-zinc-400">
-                      Loading chart...
-                    </div>
-                  ) : weeklyXpError ? (
-                    <div className="flex h-full items-center justify-center rounded-md border border-rose-400/30 bg-rose-500/10 text-sm text-rose-100">
-                      {weeklyXpError}
-                    </div>
-                  ) : weeklyXpData.length === 0 ? (
-                    <div className="flex h-full items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-sm text-zinc-400">
-                      No data available.
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={weeklyXpData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <XAxis
-                          dataKey="dateLabel"
-                          tick={{ fill: "#a1a1aa", fontSize: 12 }}
-                          axisLine={{ stroke: "#27272a" }}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          tick={{ fill: "#a1a1aa", fontSize: 12 }}
-                          axisLine={{ stroke: "#27272a" }}
-                          tickLine={false}
-                          allowDecimals={false}
-                        />
-                        <Tooltip
-                          cursor={{ fill: "#ffffff0a" }}
-                          contentStyle={{
-                            backgroundColor: "#14161c",
-                            borderColor: "#39ff8840",
-                            borderRadius: "6px",
-                            color: "#fff",
-                            fontSize: "14px",
-                          }}
-                          itemStyle={{ color: "#39ff88" }}
-                          labelStyle={{ color: "#a1a1aa", marginBottom: "4px" }}
-                        />
-                        <Bar
-                          dataKey="xp"
-                          fill="#39ff88"
-                          radius={[4, 4, 0, 0]}
-                          name="XP Amount"
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-[#39ff88]/15 bg-[#101116] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
-                  XP by Source
-                </p>
-                <p className="mt-2 text-sm text-zinc-400">
-                  Lifetime XP breakdown by category.
-                </p>
-
-                <div className="mt-6 space-y-3">
-                  {xpSourceLoading ? (
-                    <div className="rounded-md border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-400">
-                      Loading XP sources...
-                    </div>
-                  ) : xpSourceError ? (
-                    <div className="rounded-md border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-                      {xpSourceError}
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-between rounded-md border border-white/10 bg-[#14161c] p-4">
-                        <span className="text-sm font-medium text-zinc-300">
-                          Daily Check-ins
-                        </span>
-                        <span className="text-lg font-semibold text-[#39ff88]">
-                          {xpSourceData.daily_checkin} XP
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-md border border-white/10 bg-[#14161c] p-4">
-                        <span className="text-sm font-medium text-zinc-300">
-                          Strategic Tasks
-                        </span>
-                        <span className="text-lg font-semibold text-[#39ff88]">
-                          {xpSourceData.strategic_task} XP
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-md border border-white/10 bg-[#14161c] p-4">
-                        <span className="text-sm font-medium text-zinc-300">
-                          Manual Adjustments
-                        </span>
-                        <span className="text-lg font-semibold text-[#39ff88]">
-                          {xpSourceData.manual_adjustment} XP
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-[#39ff88]/15 bg-[#101116] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
-                  Monthly Analytics Overview
-                </p>
-                <p className="mt-2 text-sm text-zinc-400">
-                  Performance summary for the last 30 days.
-                </p>
-
-                <div className="mt-6">
-                  {monthlyAnalyticsLoading ? (
-                    <div className="rounded-md border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-400">
-                      Loading monthly analytics...
-                    </div>
-                  ) : monthlyAnalyticsError ? (
-                    <div className="rounded-md border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-                      {monthlyAnalyticsError}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="flex flex-col rounded-md border border-white/10 bg-[#14161c] p-4">
-                        <span className="text-xs font-medium uppercase tracking-widest text-zinc-500">
-                          Completed Days
-                        </span>
-                        <span className="mt-2 text-2xl font-semibold text-white">
-                          {monthlyCompletedDays}
-                        </span>
-                      </div>
-                      <div className="flex flex-col rounded-md border border-white/10 bg-[#14161c] p-4">
-                        <span className="text-xs font-medium uppercase tracking-widest text-zinc-500">
-                          Completion Rate
-                        </span>
-                        <span className="mt-2 text-2xl font-semibold text-[#39ff88]">
-                          {monthlyCompletionRate}%
-                        </span>
-                      </div>
-                      <div className="flex flex-col rounded-md border border-white/10 bg-[#14161c] p-4">
-                        <span className="text-xs font-medium uppercase tracking-widest text-zinc-500">
-                          XP Earned
-                        </span>
-                        <span className="mt-2 text-2xl font-semibold text-[#39ff88]">
-                          {monthlyXpEarned}
-                        </span>
-                      </div>
-                      <div className="flex flex-col rounded-md border border-white/10 bg-[#14161c] p-4">
-                        <span className="text-xs font-medium uppercase tracking-widest text-zinc-500">
-                          Tasks Completed
-                        </span>
-                        <span className="mt-2 text-2xl font-semibold text-white">
-                          {monthlyTasksCompleted}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-4">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-500">
-                  Mission Board
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">
-                  Strategic Tasks Manager
-                </h2>
-              </div>
-
-              <div className="mb-4 flex flex-wrap gap-2">
-                {taskFilters.map((filter) => (
-                  <button
-                    className={`rounded-md border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] transition ${
-                      selectedTaskFilter === filter.value
-                        ? "border-[#39ff88]/40 bg-[#39ff88]/10 text-[#baffd2]"
-                        : "border-white/10 bg-white/[0.03] text-zinc-400 hover:bg-white/[0.07]"
-                    }`}
-                    key={filter.value}
-                    onClick={() => setSelectedTaskFilter(filter.value)}
-                    type="button"
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="rounded-lg border border-white/10 bg-[#101116] p-5">
-                <div className="grid gap-3">
-                  <input
-                    className="w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-[#39ff88]/60"
-                    disabled={taskFormLoading}
-                    onChange={(event) => setTaskTitle(event.target.value)}
-                    placeholder="Task title"
-                    type="text"
-                    value={taskTitle}
-                  />
-                  <textarea
-                    className="min-h-20 w-full resize-none rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-[#39ff88]/60"
-                    disabled={taskFormLoading}
-                    onChange={(event) =>
-                      setTaskDescription(event.target.value)
-                    }
-                    placeholder="Description"
-                    value={taskDescription}
-                  />
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <select
-                      className="rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none transition focus:border-[#39ff88]/60"
-                      disabled={taskFormLoading}
-                      onChange={(event) =>
-                        setTaskPriority(
-                          event.target.value as StrategicTask["priority"],
-                        )
-                      }
-                      value={taskPriority}
-                    >
-                      <option>High</option>
-                      <option>Medium</option>
-                      <option>Low</option>
-                    </select>
-                    <input
-                      className="rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-[#39ff88]/60"
-                      disabled={taskFormLoading}
-                      onChange={(event) => setTaskCategory(event.target.value)}
-                      placeholder="Category"
-                      type="text"
-                      value={taskCategory}
-                    />
-                    <input
-                      className="rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-[#39ff88]/60"
-                      disabled={taskFormLoading}
-                      min="0"
-                      onChange={(event) => setTaskXpReward(event.target.value)}
-                      placeholder="XP reward"
-                      type="number"
-                      value={taskXpReward}
-                    />
-                  </div>
-                  <button
-                    className="rounded-md border border-[#39ff88]/40 bg-[#39ff88] px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#7cffaa] disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={taskFormLoading}
-                    onClick={handleAddStrategicTask}
-                    type="button"
-                  >
-                    {taskFormLoading ? "Adding..." : "Add Task"}
-                  </button>
-                </div>
-
-                {taskFormMessage ? (
-                  <div
-                    className={`mt-4 rounded-md border px-4 py-3 text-sm ${
-                      taskFormMessageType === "success"
-                        ? "border-[#39ff88]/30 bg-[#39ff88]/10 text-[#baffd2]"
-                        : taskFormMessageType === "error"
-                          ? "border-rose-400/30 bg-rose-500/10 text-rose-100"
-                          : "border-white/10 bg-white/[0.04] text-zinc-300"
-                    }`}
-                  >
-                    {taskFormMessage}
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="mt-4 grid gap-4">
-                {strategicTasksLoading ? (
-                  <div className="rounded-lg border border-white/10 bg-[#14161c] p-5 text-sm text-zinc-400">
-                    Loading strategic tasks...
-                  </div>
-                ) : null}
-
-                {!strategicTasksLoading && strategicTasksError ? (
-                  <div className="rounded-lg border border-rose-400/30 bg-rose-500/10 p-5 text-sm text-rose-100">
-                    {strategicTasksError}
-                  </div>
-                ) : null}
-
-                {!strategicTasksLoading &&
-                !strategicTasksError &&
-                filteredStrategicTasks.length === 0 ? (
-                  <div className="rounded-lg border border-white/10 bg-[#14161c] p-5 text-sm leading-6 text-zinc-400">
-                    <p className="font-medium text-zinc-300">
-                      No tasks in this status yet.
-                    </p>
-                    <p className="mt-1 text-zinc-500">
-                      Create a strategic task to turn long-term goals into XP.
-                    </p>
-                  </div>
-                ) : null}
-
-                {!strategicTasksLoading &&
-                  filteredStrategicTasks.map((task) => (
-                    <article
-                      className="rounded-lg border border-white/10 bg-[#14161c] p-5"
-                      key={task.id}
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div
-                          className={`inline-flex rounded-md border px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${getPriorityTone(task.priority)}`}
-                        >
-                          {task.priority}
-                        </div>
-                        <div className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-300">
-                          {task.status}
-                        </div>
-                        {task.status === "completed" ? (
-                          <div className="rounded-md border border-[#39ff88]/30 bg-[#39ff88]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#baffd2]">
-                            Completed
-                          </div>
-                        ) : null}
-                        {task.status === "archived" ? (
-                          <div className="rounded-md border border-zinc-500/30 bg-zinc-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-300">
-                            Archived
-                          </div>
-                        ) : null}
-                        <div className="rounded-md border border-[#39ff88]/20 bg-[#39ff88]/10 px-3 py-1 text-xs font-semibold text-[#baffd2]">
-                          {task.xp_reward} XP
-                        </div>
-                      </div>
-                      <h3 className="mt-4 text-lg font-semibold leading-7 text-white">
-                        {task.title}
-                      </h3>
-                      {task.description ? (
-                        <p className="mt-2 text-sm leading-6 text-zinc-400">
-                          {task.description}
-                        </p>
-                      ) : null}
-                      <p className="mt-3 text-sm text-zinc-500">
-                        Category: {task.category || "Uncategorized"}
-                      </p>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {task.status === "active" ? (
-                          <>
-                            <button
-                              className="rounded-md border border-[#39ff88]/40 bg-[#39ff88] px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#7cffaa] disabled:cursor-not-allowed disabled:opacity-60"
-                              disabled={
-                                completingTaskId === task.id ||
-                                taskActionId !== null
-                              }
-                              onClick={() => handleCompleteStrategicTask(task)}
-                              type="button"
-                            >
-                              {completingTaskId === task.id
-                                ? "Completing..."
-                                : "Complete Task"}
-                            </button>
-                            <button
-                              className="rounded-md border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
-                              disabled={taskActionId !== null}
-                              onClick={() =>
-                                handleUpdateTaskStatus(task, "paused")
-                              }
-                              type="button"
-                            >
-                              {taskActionId === `paused:${task.id}`
-                                ? "Pausing..."
-                                : "Pause"}
-                            </button>
-                            <button
-                              className="rounded-md border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
-                              disabled={taskActionId !== null}
-                              onClick={() =>
-                                handleUpdateTaskStatus(task, "archived")
-                              }
-                              type="button"
-                            >
-                              {taskActionId === `archived:${task.id}`
-                                ? "Archiving..."
-                                : "Archive"}
-                            </button>
-                          </>
-                        ) : null}
-
-                        {task.status === "paused" ? (
-                          <>
-                            <button
-                              className="rounded-md border border-[#39ff88]/40 bg-[#39ff88]/10 px-4 py-2 text-sm font-semibold text-[#baffd2] transition hover:bg-[#39ff88]/15 disabled:cursor-not-allowed disabled:opacity-60"
-                              disabled={taskActionId !== null}
-                              onClick={() =>
-                                handleUpdateTaskStatus(task, "active")
-                              }
-                              type="button"
-                            >
-                              {taskActionId === `active:${task.id}`
-                                ? "Resuming..."
-                                : "Resume"}
-                            </button>
-                            <button
-                              className="rounded-md border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
-                              disabled={taskActionId !== null}
-                              onClick={() =>
-                                handleUpdateTaskStatus(task, "archived")
-                              }
-                              type="button"
-                            >
-                              {taskActionId === `archived:${task.id}`
-                                ? "Archiving..."
-                                : "Archive"}
-                            </button>
-                          </>
-                        ) : null}
-
-                        {task.status === "completed" ? (
-                          <button
-                            className="rounded-md border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
-                            disabled={taskActionId !== null}
-                            onClick={() =>
-                              handleUpdateTaskStatus(task, "archived")
-                            }
-                            type="button"
-                          >
-                            {taskActionId === `archived:${task.id}`
-                              ? "Archiving..."
-                              : "Archive"}
-                          </button>
-                        ) : null}
-
-                        {task.status === "archived" ? (
-                          <button
-                            className="rounded-md border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60"
-                            disabled={taskActionId !== null}
-                            onClick={() => handleDeleteArchivedTask(task)}
-                            type="button"
-                          >
-                            {taskActionId === `delete:${task.id}`
-                              ? "Deleting..."
-                              : "Delete"}
-                          </button>
-                        ) : null}
-                      </div>
-                    </article>
-                  ))}
-              </div>
-            </div>
-          </section>
+        <div className="mt-12 border-t border-white/10 pt-10">
+          <StrategicTasksManager
+            taskFilters={taskFilters}
+            selectedTaskFilter={selectedTaskFilter}
+            setSelectedTaskFilter={setSelectedTaskFilter}
+            taskTitle={taskTitle}
+            setTaskTitle={setTaskTitle}
+            taskDescription={taskDescription}
+            setTaskDescription={setTaskDescription}
+            taskPriority={taskPriority}
+            setTaskPriority={setTaskPriority}
+            taskCategory={taskCategory}
+            setTaskCategory={setTaskCategory}
+            taskXpReward={taskXpReward}
+            setTaskXpReward={setTaskXpReward}
+            taskFormLoading={taskFormLoading}
+            taskFormMessage={taskFormMessage}
+            taskFormMessageType={taskFormMessageType}
+            handleAddStrategicTask={handleAddStrategicTask}
+            strategicTasksLoading={strategicTasksLoading}
+            strategicTasksError={strategicTasksError}
+            filteredStrategicTasks={filteredStrategicTasks}
+            completingTaskId={completingTaskId}
+            taskActionId={taskActionId}
+            handleCompleteStrategicTask={handleCompleteStrategicTask}
+            handleUpdateTaskStatus={handleUpdateTaskStatus}
+            handleDeleteArchivedTask={handleDeleteArchivedTask}
+          />
         </div>
       </div>
     </main>
