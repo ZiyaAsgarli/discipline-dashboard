@@ -4,17 +4,17 @@ export function StatCards({
   stats: Array<{ label: string; value: string; detail: string }>;
 }) {
   return (
-    <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mt-4 grid grid-cols-2 gap-3 md:mt-6 md:grid-cols-4 md:gap-4">
       {stats.map((stat) => (
         <div
-          className="rounded-lg border border-[#39ff88]/15 bg-[#101217] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+          className="flex flex-col justify-between rounded-xl border border-white/5 bg-[#101217] p-3 shadow-sm md:p-4"
           key={stat.label}
         >
-          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 md:text-xs">
             {stat.label}
           </p>
-          <p className="mt-2 text-2xl font-semibold text-white">{stat.value}</p>
-          <p className="mt-1 text-xs font-medium text-[#39ff88]">
+          <p className="mt-1 text-xl font-bold text-white md:mt-2 md:text-2xl">{stat.value}</p>
+          <p className="mt-0.5 text-[10px] font-medium text-[#39ff88] md:mt-1 md:text-xs">
             {stat.detail}
           </p>
         </div>

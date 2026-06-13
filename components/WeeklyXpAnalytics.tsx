@@ -18,25 +18,22 @@ export function WeeklyXpAnalytics({
   weeklyXpError: string;
 }) {
   return (
-    <div className="rounded-lg border border-[#39ff88]/15 bg-[#101116] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
-      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
+    <div className="rounded-xl border border-white/5 bg-[#101217] p-4 shadow-sm md:p-6">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#39ff88] md:text-xs">
         Weekly XP Analytics
       </p>
-      <p className="mt-2 text-sm text-zinc-400">
-        XP earned over the last 7 days.
-      </p>
 
-      <div className="mt-6 h-64 w-full">
+      <div className="mt-4 h-40 w-full md:mt-5 md:h-56">
         {weeklyXpLoading ? (
-          <div className="flex h-full items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-sm text-zinc-400">
+          <div className="flex h-full items-center justify-center rounded-lg border border-white/5 bg-white/[0.02] text-xs text-zinc-400 md:text-sm">
             Loading chart...
           </div>
         ) : weeklyXpError ? (
-          <div className="flex h-full items-center justify-center rounded-md border border-rose-400/30 bg-rose-500/10 text-sm text-rose-100">
+          <div className="flex h-full items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 text-xs text-rose-100 md:text-sm">
             {weeklyXpError}
           </div>
         ) : weeklyXpData.length === 0 ? (
-          <div className="flex h-full items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-sm text-zinc-400">
+          <div className="flex h-full items-center justify-center rounded-lg border border-white/5 bg-white/[0.02] text-xs text-zinc-400 md:text-sm">
             No data available.
           </div>
         ) : (
@@ -47,12 +44,12 @@ export function WeeklyXpAnalytics({
             >
               <XAxis
                 dataKey="dateLabel"
-                tick={{ fill: "#a1a1aa", fontSize: 12 }}
+                tick={{ fill: "#a1a1aa", fontSize: 10 }}
                 axisLine={{ stroke: "#27272a" }}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fill: "#a1a1aa", fontSize: 12 }}
+                tick={{ fill: "#a1a1aa", fontSize: 10 }}
                 axisLine={{ stroke: "#27272a" }}
                 tickLine={false}
                 allowDecimals={false}
@@ -64,10 +61,11 @@ export function WeeklyXpAnalytics({
                   borderColor: "#39ff8840",
                   borderRadius: "6px",
                   color: "#fff",
-                  fontSize: "14px",
+                  fontSize: "12px",
+                  padding: "8px",
                 }}
                 itemStyle={{ color: "#39ff88" }}
-                labelStyle={{ color: "#a1a1aa", marginBottom: "4px" }}
+                labelStyle={{ color: "#a1a1aa", marginBottom: "2px" }}
               />
               <Bar
                 dataKey="xp"

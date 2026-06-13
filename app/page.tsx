@@ -16,6 +16,7 @@ import { AuthPanel } from "@/components/AuthPanel";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { StatCards } from "@/components/StatCards";
 import { DatabaseStatusCard } from "@/components/DatabaseStatusCard";
+import { TodayExecutionCard } from "@/components/TodayExecutionCard";
 import { AnalyticsSummary } from "@/components/AnalyticsSummary";
 import { DisciplineGrid } from "@/components/DisciplineGrid";
 import { RpgProgress } from "@/components/RpgProgress";
@@ -1415,7 +1416,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#07080a] text-zinc-100">
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-6 sm:px-8 lg:px-10">
+      <div className="mx-auto flex w-full max-w-7xl flex-col px-4 py-6 md:px-8 md:py-10">
         <DashboardHeader
           displayName={displayName}
           currentLevel={currentLevel}
@@ -1425,6 +1426,23 @@ export default function Home() {
           strategicTasksError={strategicTasksError}
           onSignOut={handleSignOut}
         />
+
+        <DatabaseStatusCard databaseStatusText={databaseStatusText} />
+
+        {/* Mobile Main Action Area */}
+        <div className="mt-4 md:mt-8">
+          <TodayExecutionCard
+            currentLevel={currentLevel}
+            currentLevelXp={currentLevelXp}
+            progressPercent={progressPercent}
+            profileLoading={profileLoading}
+            dailyCheckinsLoading={dailyCheckinsLoading}
+            checkinLoading={checkinLoading}
+            checkinMessage={checkinMessage}
+            checkinMessageType={checkinMessageType}
+            onCompleteToday={handleCompleteToday}
+          />
+        </div>
 
         <StatCards
           stats={[
@@ -1451,26 +1469,40 @@ export default function Home() {
           ]}
         />
 
-        <DatabaseStatusCard databaseStatusText={databaseStatusText} />
-
-        <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex w-full flex-col gap-8 lg:w-2/3">
-            <AnalyticsSummary
-              completionRate={completionRate}
-              xpEventsCount={xpEventsCount}
-              activeTasksCount={activeTasksCount}
-              completedTasksCount={completedTasksCount}
-              currentStreak={currentStreakLabel}
-              longestStreak={longestStreakLabel}
+        {/* Desktop grid layout vs mobile stacked */}
+        <div className="mt-6 flex flex-col gap-6 md:mt-10 md:gap-8 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex w-full flex-col gap-6 md:gap-8 lg:w-[60%]">
+            <StrategicTasksManager
+              taskFilters={taskFilters}
+              selectedTaskFilter={selectedTaskFilter}
+              setSelectedTaskFilter={setSelectedTaskFilter}
+              taskTitle={taskTitle}
+              setTaskTitle={setTaskTitle}
+              taskDescription={taskDescription}
+              setTaskDescription={setTaskDescription}
+              taskPriority={taskPriority}
+              setTaskPriority={setTaskPriority}
+              taskCategory={taskCategory}
+              setTaskCategory={setTaskCategory}
+              taskXpReward={taskXpReward}
+              setTaskXpReward={setTaskXpReward}
+              taskFormLoading={taskFormLoading}
+              taskFormMessage={taskFormMessage}
+              taskFormMessageType={taskFormMessageType}
+              handleAddStrategicTask={handleAddStrategicTask}
+              strategicTasksLoading={strategicTasksLoading}
+              strategicTasksError={strategicTasksError}
+              filteredStrategicTasks={filteredStrategicTasks}
+              completingTaskId={completingTaskId}
+              taskActionId={taskActionId}
+              handleCompleteStrategicTask={handleCompleteStrategicTask}
+              handleUpdateTaskStatus={handleUpdateTaskStatus}
+              handleDeleteArchivedTask={handleDeleteArchivedTask}
             />
 
             <DisciplineGrid
               dailyCheckinsLoading={dailyCheckinsLoading}
               completedCheckinDays={completedCheckinDays}
-              checkinLoading={checkinLoading}
-              checkinMessage={checkinMessage}
-              checkinMessageType={checkinMessageType}
-              onCompleteToday={handleCompleteToday}
             />
 
             <RpgProgress
@@ -1488,19 +1520,16 @@ export default function Home() {
             />
           </div>
 
-          <aside className="flex w-full flex-col gap-8 lg:w-1/3">
-            <WeeklyXpAnalytics
-              weeklyXpData={weeklyXpData}
-              weeklyXpLoading={weeklyXpLoading}
-              weeklyXpError={weeklyXpError}
+          <aside className="flex w-full flex-col gap-6 md:gap-8 lg:w-[40%]">
+            <AnalyticsSummary
+              completionRate={completionRate}
+              xpEventsCount={xpEventsCount}
+              activeTasksCount={activeTasksCount}
+              completedTasksCount={completedTasksCount}
+              currentStreak={currentStreakLabel}
+              longestStreak={longestStreakLabel}
             />
-
-            <XpBySource
-              xpSourceData={xpSourceData}
-              xpSourceLoading={xpSourceLoading}
-              xpSourceError={xpSourceError}
-            />
-
+            
             <WeeklyCompletionAnalytics
               last7DaysCompletion={last7DaysCompletion}
               weeklyCompletedCount={weeklyCompletedCount}
@@ -1514,37 +1543,19 @@ export default function Home() {
               monthlyAnalyticsLoading={monthlyAnalyticsLoading}
               monthlyAnalyticsError={monthlyAnalyticsError}
             />
-          </aside>
-        </div>
 
-        <div className="mt-12 border-t border-white/10 pt-10">
-          <StrategicTasksManager
-            taskFilters={taskFilters}
-            selectedTaskFilter={selectedTaskFilter}
-            setSelectedTaskFilter={setSelectedTaskFilter}
-            taskTitle={taskTitle}
-            setTaskTitle={setTaskTitle}
-            taskDescription={taskDescription}
-            setTaskDescription={setTaskDescription}
-            taskPriority={taskPriority}
-            setTaskPriority={setTaskPriority}
-            taskCategory={taskCategory}
-            setTaskCategory={setTaskCategory}
-            taskXpReward={taskXpReward}
-            setTaskXpReward={setTaskXpReward}
-            taskFormLoading={taskFormLoading}
-            taskFormMessage={taskFormMessage}
-            taskFormMessageType={taskFormMessageType}
-            handleAddStrategicTask={handleAddStrategicTask}
-            strategicTasksLoading={strategicTasksLoading}
-            strategicTasksError={strategicTasksError}
-            filteredStrategicTasks={filteredStrategicTasks}
-            completingTaskId={completingTaskId}
-            taskActionId={taskActionId}
-            handleCompleteStrategicTask={handleCompleteStrategicTask}
-            handleUpdateTaskStatus={handleUpdateTaskStatus}
-            handleDeleteArchivedTask={handleDeleteArchivedTask}
-          />
+            <WeeklyXpAnalytics
+              weeklyXpData={weeklyXpData}
+              weeklyXpLoading={weeklyXpLoading}
+              weeklyXpError={weeklyXpError}
+            />
+
+            <XpBySource
+              xpSourceData={xpSourceData}
+              xpSourceLoading={xpSourceLoading}
+              xpSourceError={xpSourceError}
+            />
+          </aside>
         </div>
       </div>
     </main>

@@ -8,38 +8,35 @@ export function WeeklyCompletionAnalytics({
   weeklyCompletedCount: number;
 }) {
   return (
-    <div className="rounded-lg border border-[#39ff88]/15 bg-[#101116] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
-      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
-        Weekly Completion Analytics
-      </p>
-      <p className="mt-2 text-sm text-zinc-400">
-        Daily completion status for the last 7 days.
+    <div className="rounded-xl border border-white/5 bg-[#101217] p-4 shadow-sm md:p-6">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#39ff88] md:text-xs">
+        Weekly Completion
       </p>
 
-      <div className="mt-6 flex flex-col gap-4">
-        <div className="grid grid-cols-7 gap-2">
+      <div className="mt-4 flex flex-col gap-3 md:mt-5 md:gap-4">
+        <div className="grid grid-cols-7 gap-1 md:gap-2">
           {last7DaysCompletion.map((day) => (
             <div
               key={day.fullDate}
-              className="flex flex-col items-center gap-2"
+              className="flex flex-col items-center gap-1 md:gap-2"
             >
               <div
-                className={`flex h-10 w-full items-center justify-center rounded-md border text-sm font-semibold transition-all ${
+                className={`flex h-8 w-full items-center justify-center rounded-md border text-xs font-bold transition-all md:h-10 md:text-sm ${
                   day.completed
-                    ? "border-[#7cffaa]/70 bg-[#39ff88] text-black shadow-[0_0_16px_rgba(57,255,136,0.35)]"
-                    : "border-red-950/70 bg-[#451117] text-rose-500/50"
+                    ? "border-[#7cffaa]/70 bg-[#39ff88] text-black shadow-[0_0_12px_rgba(57,255,136,0.3)]"
+                    : "border-red-950/50 bg-[#451117] text-rose-500/40"
                 }`}
                 title={day.fullDate}
               >
                 {day.completed ? "✓" : "✗"}
               </div>
-              <span className="text-xs font-medium uppercase tracking-widest text-zinc-500">
+              <span className="text-[8px] font-medium uppercase tracking-widest text-zinc-500 md:text-[10px]">
                 {day.dateLabel}
               </span>
             </div>
           ))}
         </div>
-        <p className="text-center text-sm font-medium text-zinc-300">
+        <p className="text-center text-xs font-medium text-zinc-400 md:text-sm">
           {weeklyCompletedCount} / 7 days completed
         </p>
       </div>
