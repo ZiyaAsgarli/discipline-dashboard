@@ -155,7 +155,19 @@ Implementation included:
 
 *Note: Offline database sync and service worker caching were intentionally not implemented yet to avoid risky Supabase data desynchronization. The goal was strictly the installable, full-screen mobile app experience.*
 
-## 14. Challenges and Solutions
+## 14. Multilingual UX Support
+
+Because this project is built by an Azerbaijani developer, multilingual support was added to ensure the product can be used comfortably by both Azerbaijani and English-speaking users. This addition significantly improves the localized user experience and enhances the project's portfolio presentation.
+
+The implementation uses a lightweight frontend-only i18n system without the overhead of massive internationalization libraries:
+- A centralized translation dictionary stores UI labels.
+- A reusable `LanguageSwitcher` component allows users to toggle languages seamlessly.
+- The selected language is persisted across sessions using `localStorage` (via the `discipline_language` key).
+- UI elements across the public landing page, auth panel, and dashboard dynamically update based on the selected language.
+
+No database schema changes were needed because this version securely stores the language preference locally on the client. A future improvement could migrate this preference to the user `profiles` table to sync language choices across multiple devices.
+
+## 15. Challenges and Solutions
 
 Email confirmation during development can affect the auth flow. The solution is to handle loading and error states clearly and configure Supabase Auth settings appropriately during local testing.
 
@@ -167,7 +179,7 @@ Profile totals are kept synced with XP events by updating `profiles.total_xp` an
 
 RLS required careful insert policies so authenticated users can create only their own records while still preventing access to other users' data.
 
-## 15. Future Roadmap
+## 16. Future Roadmap
 
 - Power BI export/reporting layer
 - Better task editing
@@ -175,6 +187,6 @@ RLS required careful insert policies so authenticated users can create only thei
 - Public portfolio landing page
 - Optional backend jobs on Render.com
 
-## 16. Interview Summary
+## 17. Interview Summary
 
 In an interview, this project can be presented as a full-stack career analytics dashboard that combines product thinking, database design, authentication, security, and analytics. It demonstrates the ability to design a user-focused system, build secure data flows with Supabase and RLS, and translate personal productivity data into measurable BI-style metrics. It also showcases a strong emphasis on mobile-first UX and premium product design.

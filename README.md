@@ -119,6 +119,7 @@ Discipline Dashboard is designed as both a personal operating system and a profe
 - BI-style analytics using Supabase-backed data
 - User-specific Row Level Security
 - PWA / Installable App Support
+- Azerbaijani / English Language Switcher
 
 ## Mobile-First UX Polish
 
@@ -138,6 +139,10 @@ The application is configured as a Progressive Web App (PWA). It can be directly
 - **Custom Premium App Icon**: Includes a full suite of custom-designed icons (dark background with neon green brand styling) optimized for Android and iOS home screens.
 - **Standalone Display Mode**: Opens without a browser URL bar to fully immerse the user in a standalone app-like launch experience.
 - **Mobile-First Experience**: Combined with the mobile UX polish, this transforms the dashboard into an installable daily habit tracker.
+
+## Azerbaijani / English Language Switcher
+
+The dashboard includes a lightweight frontend-only EN/AZ language switcher. Users can choose Azerbaijani or English, and the selected language is persisted locally for future sessions using `localStorage`. Both the public landing page and the authenticated dashboard support translated UI labels. This improves accessibility and usability, ensuring the product can be used comfortably by both Azerbaijani and English-speaking users.
 
 ## Code Architecture
 
