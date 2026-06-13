@@ -14,7 +14,20 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Discipline Dashboard",
-  description: "A personal discipline and career tracking dashboard.",
+  description: "RPG-based career and discipline tracking dashboard.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Discipline",
+  },
+};
+
+export const viewport = {
+  themeColor: "#39ff88",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
