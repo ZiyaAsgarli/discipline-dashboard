@@ -93,6 +93,11 @@ Discipline Dashboard is designed as both a personal operating system and a profe
 - XP event audit trail
 - Recent XP Activity feed
 - Analytics Summary cards
+- Weekly XP Analytics
+- XP by Source analytics
+- Weekly Completion Analytics
+- Monthly Analytics Overview
+- BI-style analytics using Supabase-backed data
 - User-specific Row Level Security
 
 ## Database Tables
@@ -164,6 +169,5 @@ http://localhost:3000
 
 - Task edit/delete/archive
 - Better charts
-- Monthly analytics
 - Power BI export or reporting layer
 - Public portfolio case study page

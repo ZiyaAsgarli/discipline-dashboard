@@ -85,8 +85,12 @@ The dashboard includes an analytics summary layer with:
 - Active task count
 - Completed task count
 - Recent XP Activity feed
+- Weekly XP Analytics
+- XP by Source breakdown
+- Weekly Completion Analytics
+- Monthly Analytics Overview
 
-This supports Data Analytics / BI portfolio value because it demonstrates event tracking, metric calculation, dashboard design, and user-specific reporting. The data model can later be extended into charts, trend analysis, and external reporting tools such as Power BI.
+These features support the project’s Data Analytics / BI portfolio value because they demonstrate event tracking, advanced metric calculation, dashboard design, and user-specific reporting. The analytics are seamlessly derived from relational tables including `daily_checkins`, `xp_events`, and `strategic_tasks`. The data model can later be extended into deeper trend analysis and external reporting tools such as Power BI.
 
 ## 10. Product Features Implemented
 
@@ -128,8 +132,6 @@ RLS required careful insert policies so authenticated users can create only thei
 
 ## 13. Future Roadmap
 
-- Charts and trend analysis
-- Monthly analytics
 - Power BI export/reporting layer
 - Better task editing
 - Streak tracking
