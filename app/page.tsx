@@ -2,6 +2,14 @@
 
 import type { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 type Profile = {
   id: string;
@@ -39,6 +47,12 @@ type XpEvent = {
   xp_amount: number;
   source_type: string;
   created_at: string;
+};
+
+type WeeklyXpData = {
+  dateLabel: string;
+  fullDate: string;
+  xp: number;
 };
 
 async function getSupabase() {
@@ -156,6 +170,9 @@ export default function Home() {
   const [xpEventsCount, setXpEventsCount] = useState(0);
   const [xpEventsLoading, setXpEventsLoading] = useState(false);
   const [xpEventsError, setXpEventsError] = useState("");
+  const [weeklyXpData, setWeeklyXpData] = useState<WeeklyXpData[]>([]);
+  const [weeklyXpLoading, setWeeklyXpLoading] = useState(false);
+  const [weeklyXpError, setWeeklyXpError] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [taskPriority, setTaskPriority] =
@@ -301,6 +318,102 @@ export default function Home() {
       detail: "Open missions",
     },
   ];
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchWeeklyXp() {
+      if (!user) {
+        if (isMounted) {
+          setWeeklyXpData([]);
+          setWeeklyXpError("");
+          setWeeklyXpLoading(false);
+        }
+        return;
+      }
+
+      setWeeklyXpLoading(true);
+      setWeeklyXpError("");
+
+      try {
+        const supabase = await getSupabase();
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const { data, error } = await supabase
+          .from("xp_events")
+          .select("xp_amount, created_at")
+          .eq("user_id", user.id)
+          .gte("created_at", sevenDaysAgo.toISOString())
+          .returns<{ xp_amount: number; created_at: string }[]>();
+
+        if (!isMounted) return;
+
+        if (error) {
+          setWeeklyXpData([]);
+          setWeeklyXpError("Unable to load weekly analytics.");
+          return;
+        }
+
+        const last7Days: string[] = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const localDate = new Date(
+            d.getTime() - d.getTimezoneOffset() * 60000,
+          )
+            .toISOString()
+            .slice(0, 10);
+          last7Days.push(localDate);
+        }
+
+        const xpByDate = new Map<string, number>();
+        for (const event of data ?? []) {
+          const d = new Date(event.created_at);
+          const localDate = new Date(
+            d.getTime() - d.getTimezoneOffset() * 60000,
+          )
+            .toISOString()
+            .slice(0, 10);
+          xpByDate.set(
+            localDate,
+            (xpByDate.get(localDate) || 0) + event.xp_amount,
+          );
+        }
+
+        const chartData: WeeklyXpData[] = last7Days.map((dateStr) => {
+          const [year, month, day] = dateStr.split("-").map(Number);
+          const dateObj = new Date(year, month - 1, day);
+          const shortDay = new Intl.DateTimeFormat(undefined, {
+            weekday: "short",
+          }).format(dateObj);
+          return {
+            dateLabel: shortDay,
+            fullDate: dateStr,
+            xp: xpByDate.get(dateStr) || 0,
+          };
+        });
+
+        setWeeklyXpData(chartData);
+      } catch {
+        if (isMounted) {
+          setWeeklyXpData([]);
+          setWeeklyXpError("Unable to load weekly analytics.");
+        }
+      } finally {
+        if (isMounted) {
+          setWeeklyXpLoading(false);
+        }
+      }
+    }
+
+    fetchWeeklyXp();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, profile?.total_xp]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1682,6 +1795,66 @@ export default function Home() {
                         </p>
                       </article>
                     ))}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-[#39ff88]/15 bg-[#101116] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
+                  Weekly XP Analytics
+                </p>
+                <p className="mt-2 text-sm text-zinc-400">
+                  XP earned over the last 7 days.
+                </p>
+
+                <div className="mt-6 h-64 w-full">
+                  {weeklyXpLoading ? (
+                    <div className="flex h-full items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-sm text-zinc-400">
+                      Loading chart...
+                    </div>
+                  ) : weeklyXpError ? (
+                    <div className="flex h-full items-center justify-center rounded-md border border-rose-400/30 bg-rose-500/10 text-sm text-rose-100">
+                      {weeklyXpError}
+                    </div>
+                  ) : weeklyXpData.length === 0 ? (
+                    <div className="flex h-full items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-sm text-zinc-400">
+                      No data available.
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={weeklyXpData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis
+                          dataKey="dateLabel"
+                          tick={{ fill: "#a1a1aa", fontSize: 12 }}
+                          axisLine={{ stroke: "#27272a" }}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tick={{ fill: "#a1a1aa", fontSize: 12 }}
+                          axisLine={{ stroke: "#27272a" }}
+                          tickLine={false}
+                          allowDecimals={false}
+                        />
+                        <Tooltip
+                          cursor={{ fill: "#ffffff0a" }}
+                          contentStyle={{
+                            backgroundColor: "#14161c",
+                            borderColor: "#39ff8840",
+                            borderRadius: "6px",
+                            color: "#fff",
+                            fontSize: "14px",
+                          }}
+                          itemStyle={{ color: "#39ff88" }}
+                          labelStyle={{ color: "#a1a1aa", marginBottom: "4px" }}
+                        />
+                        <Bar
+                          dataKey="xp"
+                          fill="#39ff88"
+                          radius={[4, 4, 0, 0]}
+                          name="XP Amount"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </div>
             </div>
