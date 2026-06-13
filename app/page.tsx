@@ -186,6 +186,10 @@ export default function Home() {
   });
   const [xpSourceLoading, setXpSourceLoading] = useState(false);
   const [xpSourceError, setXpSourceError] = useState("");
+  const [monthlyXpEarned, setMonthlyXpEarned] = useState(0);
+  const [monthlyTasksCompleted, setMonthlyTasksCompleted] = useState(0);
+  const [monthlyAnalyticsLoading, setMonthlyAnalyticsLoading] = useState(false);
+  const [monthlyAnalyticsError, setMonthlyAnalyticsError] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [taskPriority, setTaskPriority] =
@@ -287,6 +291,25 @@ export default function Home() {
   const weeklyCompletedCount = last7DaysCompletion.filter(
     (d) => d.completed,
   ).length;
+
+  let monthlyCompletedDays = 0;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const localDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 10);
+    if (profile?.discipline_start_date) {
+      const campaignDay = getCampaignDay(
+        localDate,
+        profile.discipline_start_date,
+      );
+      if (completedCheckinDays.has(campaignDay)) {
+        monthlyCompletedDays += 1;
+      }
+    }
+  }
+  const monthlyCompletionRate = Math.round((monthlyCompletedDays / 30) * 100);
 
   const filteredStrategicTasks =
     selectedTaskFilter === "all"
@@ -520,8 +543,68 @@ export default function Home() {
       }
     }
 
+    async function fetchMonthlyStats() {
+      if (!user) {
+        if (isMounted) {
+          setMonthlyXpEarned(0);
+          setMonthlyTasksCompleted(0);
+          setMonthlyAnalyticsLoading(false);
+        }
+        return;
+      }
+      setMonthlyAnalyticsLoading(true);
+      setMonthlyAnalyticsError("");
+
+      try {
+        const supabase = await getSupabase();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+        thirtyDaysAgo.setHours(0, 0, 0, 0);
+        const startDateStr = thirtyDaysAgo.toISOString();
+
+        const [xpRes, tasksRes] = await Promise.all([
+          supabase
+            .from("xp_events")
+            .select("xp_amount")
+            .eq("user_id", user.id)
+            .gte("created_at", startDateStr),
+          supabase
+            .from("strategic_tasks")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .eq("status", "completed")
+            .gte("completed_at", startDateStr),
+        ]);
+
+        if (!isMounted) return;
+
+        if (xpRes.error || tasksRes.error) {
+          setMonthlyXpEarned(0);
+          setMonthlyTasksCompleted(0);
+          setMonthlyAnalyticsError("Unable to load monthly analytics.");
+          return;
+        }
+
+        const totalXp =
+          xpRes.data?.reduce((sum, event) => sum + event.xp_amount, 0) ?? 0;
+        setMonthlyXpEarned(totalXp);
+        setMonthlyTasksCompleted(tasksRes.count ?? 0);
+      } catch {
+        if (isMounted) {
+          setMonthlyXpEarned(0);
+          setMonthlyTasksCompleted(0);
+          setMonthlyAnalyticsError("Unable to load monthly analytics.");
+        }
+      } finally {
+        if (isMounted) {
+          setMonthlyAnalyticsLoading(false);
+        }
+      }
+    }
+
     fetchWeeklyXp();
     fetchXpSourceBreakdown();
+    fetchMonthlyStats();
 
     return () => {
       isMounted = false;
@@ -2052,6 +2135,62 @@ export default function Home() {
                         </span>
                       </div>
                     </>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-[#39ff88]/15 bg-[#101116] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
+                  Monthly Analytics Overview
+                </p>
+                <p className="mt-2 text-sm text-zinc-400">
+                  Performance summary for the last 30 days.
+                </p>
+
+                <div className="mt-6">
+                  {monthlyAnalyticsLoading ? (
+                    <div className="rounded-md border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-400">
+                      Loading monthly analytics...
+                    </div>
+                  ) : monthlyAnalyticsError ? (
+                    <div className="rounded-md border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                      {monthlyAnalyticsError}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col rounded-md border border-white/10 bg-[#14161c] p-4">
+                        <span className="text-xs font-medium uppercase tracking-widest text-zinc-500">
+                          Completed Days
+                        </span>
+                        <span className="mt-2 text-2xl font-semibold text-white">
+                          {monthlyCompletedDays}
+                        </span>
+                      </div>
+                      <div className="flex flex-col rounded-md border border-white/10 bg-[#14161c] p-4">
+                        <span className="text-xs font-medium uppercase tracking-widest text-zinc-500">
+                          Completion Rate
+                        </span>
+                        <span className="mt-2 text-2xl font-semibold text-[#39ff88]">
+                          {monthlyCompletionRate}%
+                        </span>
+                      </div>
+                      <div className="flex flex-col rounded-md border border-white/10 bg-[#14161c] p-4">
+                        <span className="text-xs font-medium uppercase tracking-widest text-zinc-500">
+                          XP Earned
+                        </span>
+                        <span className="mt-2 text-2xl font-semibold text-[#39ff88]">
+                          {monthlyXpEarned}
+                        </span>
+                      </div>
+                      <div className="flex flex-col rounded-md border border-white/10 bg-[#14161c] p-4">
+                        <span className="text-xs font-medium uppercase tracking-widest text-zinc-500">
+                          Tasks Completed
+                        </span>
+                        <span className="mt-2 text-2xl font-semibold text-white">
+                          {monthlyTasksCompleted}
+                        </span>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
