@@ -60,6 +60,23 @@ This release represents the first stable full-stack MVP version of the Disciplin
 - [x] Vercel deployment completed
 - [x] Environment variables configured securely
 
+## v1.1 Mobile/PWA Release
+
+This release focuses on transforming the application into a true mobile app experience:
+
+- Mobile-first premium UX redesign
+- Compact habit-tracker style layout
+- Today Execution Card
+- Compact KPI cards
+- Compact 180-day progress map
+- Improved Strategic Tasks Manager mobile usability
+- Lighter analytics sections
+- PWA install support
+- Custom branded app icon
+- Standalone mobile app-like experience
+
+*v1.1 turns the project from a desktop-style dashboard into a mobile-friendly personal operating system that can be installed and used like a real productivity app.*
+
 ## Why This Project Exists
 
 Discipline Dashboard is designed as both a personal operating system and a professional portfolio project.
