@@ -101,6 +101,7 @@ Discipline Dashboard is designed as both a personal operating system and a profe
 - Monthly Analytics Overview
 - BI-style analytics using Supabase-backed data
 - User-specific Row Level Security
+- PWA / Installable App Support
 
 ## Mobile-First UX Polish
 
@@ -112,6 +113,14 @@ The dashboard features a heavily optimized, premium mobile-first redesign that t
 - A mobile-friendly Strategic Tasks Manager with wrap-friendly chip filters.
 - Visually lighter, secondary analytics sections to prioritize action over data-scrolling.
 - Improved visual hierarchy and reduced meaningless scrolling, resulting in a dark, satisfying RPG productivity app feel.
+
+## PWA / Installable App Support
+
+The application is configured as a Progressive Web App (PWA). It can be directly installed on mobile devices (via "Add to Home Screen" or "Install App" browser actions) to provide a true native-app feel.
+- **Web App Manifest**: Automatically provides app metadata.
+- **Mobile App Icon Assets**: Includes custom RPG-styled splash and home screen icons.
+- **Standalone Display Mode**: Opens without a browser URL bar to fully immerse the user.
+- **Mobile-First Experience**: Combined with the mobile UX polish, this transforms the dashboard into an installable daily habit tracker.
 
 ## Code Architecture
 

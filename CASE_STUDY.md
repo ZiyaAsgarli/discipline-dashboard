@@ -130,7 +130,7 @@ Row Level Security was chosen to support secure multi-user architecture. Each us
 
 The project was developed incrementally: first the UI foundation, then schema planning, then authentication, then core data flows, then analytics and task controls. This reduced complexity and made each layer easier to test.
 
-## 13. Product UX Improvements (Mobile-First Design)
+## 12. Product UX Improvements (Mobile-First Design)
 
 While the initial dashboard was highly functional, it became clear that the UI was too long and heavy on mobile devices. Too many large sections created unnecessary scrolling, and the primary "Complete Today" action was buried underneath heavy statistics and grid views.
 
@@ -142,6 +142,18 @@ To solve this, the dashboard underwent a strict mobile-first premium UX redesign
 - **Secondary Analytics**: The BI analytics charts and summaries were made visually lighter and grouped lower down to support the experience rather than overwhelm it.
 
 This redesign provided massive product value: it transformed the dashboard from a desktop web tool into a motivating, effortless, and premium daily habit tracker. This aligns the project strongly with real-world SaaS and product UX thinking, delivering a much more polished portfolio presentation.
+
+## 13. PWA / Mobile App Experience
+
+Because the dashboard is intended for daily personal use, it was crucial that users could open it like a native mobile app rather than navigating to a browser tab. Adding Progressive Web App (PWA) support drastically improves the premium mobile habit-tracker feeling.
+
+Implementation included:
+- A `manifest.json` file configuring the app name, theme, and background colors.
+- Custom app icons generated for home screens and splash screens.
+- Next.js viewport and metadata tags configured for `appleWebApp` capabilities.
+- Enforcing `standalone` display mode to hide the browser URL bar entirely.
+
+*Note: Offline database sync and service worker caching were intentionally not implemented yet to avoid risky Supabase data desynchronization. The goal was strictly the installable, full-screen mobile app experience.*
 
 ## 14. Challenges and Solutions
 
@@ -155,7 +167,7 @@ Profile totals are kept synced with XP events by updating `profiles.total_xp` an
 
 RLS required careful insert policies so authenticated users can create only their own records while still preventing access to other users' data.
 
-## 13. Future Roadmap
+## 15. Future Roadmap
 
 - Power BI export/reporting layer
 - Better task editing
@@ -163,6 +175,6 @@ RLS required careful insert policies so authenticated users can create only thei
 - Public portfolio landing page
 - Optional backend jobs on Render.com
 
-## 15. Interview Summary
+## 16. Interview Summary
 
 In an interview, this project can be presented as a full-stack career analytics dashboard that combines product thinking, database design, authentication, security, and analytics. It demonstrates the ability to design a user-focused system, build secure data flows with Supabase and RLS, and translate personal productivity data into measurable BI-style metrics. It also showcases a strong emphasis on mobile-first UX and premium product design.
