@@ -25,29 +25,31 @@ import { XpBySource } from "@/components/XpBySource";
 import { WeeklyCompletionAnalytics } from "@/components/WeeklyCompletionAnalytics";
 import { MonthlyAnalyticsOverview } from "@/components/MonthlyAnalyticsOverview";
 import { StrategicTasksManager } from "@/components/StrategicTasksManager";
-
+import {
+  getLevelTitle,
+  getCurrentLevelXp,
+  getLevelProgressPercent,
+} from "@/lib/dashboard/levels";
+import {
+  getTodayDate,
+  formatActivityDate,
+  getThirtyDaysAgoDate,
+  calculateCampaignDay,
+} from "@/lib/dashboard/dates";
+import {
+  calculateCurrentStreak,
+  calculateLongestStreak,
+  calculateCompletionRate,
+  buildWeeklyCompletionData,
+  buildWeeklyXpData,
+  buildXpBySource,
+  calculateMonthlyAnalytics,
+} from "@/lib/dashboard/analytics";
 async function getSupabase() {
   const { supabase } = await import("@/lib/supabaseClient");
   return supabase;
 }
 
-function getTodayDate() {
-  const now = new Date();
-  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return localDate.toISOString().slice(0, 10);
-}
-
-function getUtcDayValue(date: string) {
-  const [year, month, day] = date.split("-").map(Number);
-  return Date.UTC(year, month - 1, day);
-}
-
-function getCampaignDay(today: string, startDate: string) {
-  const millisecondsPerDay = 24 * 60 * 60 * 1000;
-  return Math.floor(
-    (getUtcDayValue(today) - getUtcDayValue(startDate)) / millisecondsPerDay,
-  ) + 1;
-}
 
 function validateCredentials(email: string, password: string) {
   if (!email.trim()) {
@@ -67,29 +69,6 @@ function validateCredentials(email: string, password: string) {
 
 
 
-function getLevelTitle(level: number): string {
-  const levelTitles: Record<number, string> = {
-    1: "Novice",
-    2: "Consistency Builder",
-    3: "SQL Apprentice",
-    4: "Data Analyst Trainee",
-    5: "BI Warrior",
-    6: "Full-Stack Strategist",
-    7: "Automation Builder",
-    8: "Product Engineer",
-    9: "Analytics Commander",
-    10: "Data Analytics Jedi",
-  };
-
-  return levelTitles[level] ?? "Legendary Operator";
-}
-
-function formatActivityDate(date: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(date));
-}
 
 async function upsertProfile(
   supabase: Awaited<ReturnType<typeof getSupabase>>,
@@ -181,28 +160,8 @@ export default function Home() {
   const completedCampaignDays = Array.from(completedCheckinDays).sort(
     (firstDay, secondDay) => firstDay - secondDay,
   );
-  let currentStreak = 0;
-  let longestStreak = 0;
-  let runningStreak = 0;
-
-  if (completedCampaignDays.length > 0) {
-    const latestCompletedDay =
-      completedCampaignDays[completedCampaignDays.length - 1];
-
-    for (let day = latestCompletedDay; completedCheckinDays.has(day); day--) {
-      currentStreak += 1;
-    }
-
-    completedCampaignDays.forEach((day, index) => {
-      if (index > 0 && day === completedCampaignDays[index - 1] + 1) {
-        runningStreak += 1;
-      } else {
-        runningStreak = 1;
-      }
-
-      longestStreak = Math.max(longestStreak, runningStreak);
-    });
-  }
+  const currentStreak = calculateCurrentStreak(completedCampaignDays, completedCheckinDays);
+  const longestStreak = calculateLongestStreak(completedCampaignDays);
 
   const currentStreakLabel = `${currentStreak} ${
     currentStreak === 1 ? "day" : "days"
@@ -216,55 +175,20 @@ export default function Home() {
   const completedTasksCount = strategicTasks.filter(
     (task) => task.status === "completed",
   ).length;
-  const completionRate = Math.round((completedCheckinsCount / 180) * 100);
+  const completionRate = calculateCompletionRate(completedCheckinsCount, 180);
 
-  const last7DaysCompletion = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    const localDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 10);
-    const shortDay = new Intl.DateTimeFormat(undefined, {
-      weekday: "short",
-    }).format(d);
-
-    let isComplete = false;
-    if (profile?.discipline_start_date) {
-      const campaignDay = getCampaignDay(
-        localDate,
-        profile.discipline_start_date,
-      );
-      isComplete = completedCheckinDays.has(campaignDay);
-    }
-
-    return {
-      dateLabel: shortDay,
-      fullDate: localDate,
-      completed: isComplete,
-    };
-  });
+  const last7DaysCompletion = buildWeeklyCompletionData(
+    profile?.discipline_start_date,
+    completedCheckinDays
+  );
   const weeklyCompletedCount = last7DaysCompletion.filter(
     (d) => d.completed,
   ).length;
 
-  let monthlyCompletedDays = 0;
-  for (let i = 0; i < 30; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const localDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 10);
-    if (profile?.discipline_start_date) {
-      const campaignDay = getCampaignDay(
-        localDate,
-        profile.discipline_start_date,
-      );
-      if (completedCheckinDays.has(campaignDay)) {
-        monthlyCompletedDays += 1;
-      }
-    }
-  }
-  const monthlyCompletionRate = Math.round((monthlyCompletedDays / 30) * 100);
+  const { monthlyCompletedDays, monthlyCompletionRate } = calculateMonthlyAnalytics(
+    profile?.discipline_start_date,
+    completedCheckinDays
+  );
 
   const filteredStrategicTasks =
     selectedTaskFilter === "all"
@@ -317,45 +241,7 @@ export default function Home() {
           return;
         }
 
-        const last7Days: string[] = [];
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          const localDate = new Date(
-            d.getTime() - d.getTimezoneOffset() * 60000,
-          )
-            .toISOString()
-            .slice(0, 10);
-          last7Days.push(localDate);
-        }
-
-        const xpByDate = new Map<string, number>();
-        for (const event of data ?? []) {
-          const d = new Date(event.created_at);
-          const localDate = new Date(
-            d.getTime() - d.getTimezoneOffset() * 60000,
-          )
-            .toISOString()
-            .slice(0, 10);
-          xpByDate.set(
-            localDate,
-            (xpByDate.get(localDate) || 0) + event.xp_amount,
-          );
-        }
-
-        const chartData: WeeklyXpData[] = last7Days.map((dateStr) => {
-          const [year, month, day] = dateStr.split("-").map(Number);
-          const dateObj = new Date(year, month - 1, day);
-          const shortDay = new Intl.DateTimeFormat(undefined, {
-            weekday: "short",
-          }).format(dateObj);
-          return {
-            dateLabel: shortDay,
-            fullDate: dateStr,
-            xp: xpByDate.get(dateStr) || 0,
-          };
-        });
-
+        const chartData = buildWeeklyXpData(data ?? []);
         setWeeklyXpData(chartData);
       } catch {
         if (isMounted) {
@@ -407,21 +293,8 @@ export default function Home() {
           return;
         }
 
-        let daily_checkin = 0;
-        let strategic_task = 0;
-        let manual_adjustment = 0;
-
-        for (const event of data ?? []) {
-          if (event.source_type === "daily_checkin") {
-            daily_checkin += event.xp_amount;
-          } else if (event.source_type === "strategic_task") {
-            strategic_task += event.xp_amount;
-          } else if (event.source_type === "manual_adjustment") {
-            manual_adjustment += event.xp_amount;
-          }
-        }
-
-        setXpSourceData({ daily_checkin, strategic_task, manual_adjustment });
+        const sourceData = buildXpBySource(data ?? []);
+        setXpSourceData(sourceData);
       } catch {
         if (isMounted) {
           setXpSourceData({
@@ -452,10 +325,7 @@ export default function Home() {
 
       try {
         const supabase = await getSupabase();
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
-        thirtyDaysAgo.setHours(0, 0, 0, 0);
-        const startDateStr = thirtyDaysAgo.toISOString();
+        const startDateStr = getThirtyDaysAgoDate();
 
         const [xpRes, tasksRes] = await Promise.all([
           supabase
@@ -1031,7 +901,7 @@ export default function Home() {
     }
 
     const today = getTodayDate();
-    const campaignDay = getCampaignDay(today, profile.discipline_start_date);
+    const campaignDay = calculateCampaignDay(today, profile.discipline_start_date);
 
     if (campaignDay < 1 || campaignDay > 180) {
       setCheckinMessageType("info");
@@ -1524,8 +1394,8 @@ export default function Home() {
   const currentLevel = profileLoading
     ? "Loading..."
     : `Level ${profileLevel}: ${levelTitle}`;
-  const currentLevelXp = profileLoading ? 0 : (profile?.total_xp ?? 0) % 1000;
-  const progressPercent = (currentLevelXp / 1000) * 100;
+  const currentLevelXp = profileLoading ? 0 : getCurrentLevelXp(profile?.total_xp ?? 0);
+  const progressPercent = profileLoading ? 0 : getLevelProgressPercent(profile?.total_xp ?? 0);
 
   if (authChecking || !user) {
     return (
