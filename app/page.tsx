@@ -55,6 +55,12 @@ type WeeklyXpData = {
   xp: number;
 };
 
+type XpSourceData = {
+  daily_checkin: number;
+  strategic_task: number;
+  manual_adjustment: number;
+};
+
 async function getSupabase() {
   const { supabase } = await import("@/lib/supabaseClient");
   return supabase;
@@ -173,6 +179,13 @@ export default function Home() {
   const [weeklyXpData, setWeeklyXpData] = useState<WeeklyXpData[]>([]);
   const [weeklyXpLoading, setWeeklyXpLoading] = useState(false);
   const [weeklyXpError, setWeeklyXpError] = useState("");
+  const [xpSourceData, setXpSourceData] = useState<XpSourceData>({
+    daily_checkin: 0,
+    strategic_task: 0,
+    manual_adjustment: 0,
+  });
+  const [xpSourceLoading, setXpSourceLoading] = useState(false);
+  const [xpSourceError, setXpSourceError] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [taskPriority, setTaskPriority] =
@@ -408,7 +421,77 @@ export default function Home() {
       }
     }
 
+    async function fetchXpSourceBreakdown() {
+      if (!user) {
+        if (isMounted) {
+          setXpSourceData({
+            daily_checkin: 0,
+            strategic_task: 0,
+            manual_adjustment: 0,
+          });
+          setXpSourceError("");
+          setXpSourceLoading(false);
+        }
+        return;
+      }
+
+      setXpSourceLoading(true);
+      setXpSourceError("");
+
+      try {
+        const supabase = await getSupabase();
+
+        const { data, error } = await supabase
+          .from("xp_events")
+          .select("xp_amount, source_type")
+          .eq("user_id", user.id)
+          .returns<{ xp_amount: number; source_type: string }[]>();
+
+        if (!isMounted) return;
+
+        if (error) {
+          setXpSourceData({
+            daily_checkin: 0,
+            strategic_task: 0,
+            manual_adjustment: 0,
+          });
+          setXpSourceError("Unable to load XP sources.");
+          return;
+        }
+
+        let daily_checkin = 0;
+        let strategic_task = 0;
+        let manual_adjustment = 0;
+
+        for (const event of data ?? []) {
+          if (event.source_type === "daily_checkin") {
+            daily_checkin += event.xp_amount;
+          } else if (event.source_type === "strategic_task") {
+            strategic_task += event.xp_amount;
+          } else if (event.source_type === "manual_adjustment") {
+            manual_adjustment += event.xp_amount;
+          }
+        }
+
+        setXpSourceData({ daily_checkin, strategic_task, manual_adjustment });
+      } catch {
+        if (isMounted) {
+          setXpSourceData({
+            daily_checkin: 0,
+            strategic_task: 0,
+            manual_adjustment: 0,
+          });
+          setXpSourceError("Unable to load XP sources.");
+        }
+      } finally {
+        if (isMounted) {
+          setXpSourceLoading(false);
+        }
+      }
+    }
+
     fetchWeeklyXp();
+    fetchXpSourceBreakdown();
 
     return () => {
       isMounted = false;
@@ -1854,6 +1937,54 @@ export default function Home() {
                         />
                       </BarChart>
                     </ResponsiveContainer>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-[#39ff88]/15 bg-[#101116] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#39ff88]">
+                  XP by Source
+                </p>
+                <p className="mt-2 text-sm text-zinc-400">
+                  Lifetime XP breakdown by category.
+                </p>
+
+                <div className="mt-6 space-y-3">
+                  {xpSourceLoading ? (
+                    <div className="rounded-md border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-400">
+                      Loading XP sources...
+                    </div>
+                  ) : xpSourceError ? (
+                    <div className="rounded-md border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                      {xpSourceError}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between rounded-md border border-white/10 bg-[#14161c] p-4">
+                        <span className="text-sm font-medium text-zinc-300">
+                          Daily Check-ins
+                        </span>
+                        <span className="text-lg font-semibold text-[#39ff88]">
+                          {xpSourceData.daily_checkin} XP
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-md border border-white/10 bg-[#14161c] p-4">
+                        <span className="text-sm font-medium text-zinc-300">
+                          Strategic Tasks
+                        </span>
+                        <span className="text-lg font-semibold text-[#39ff88]">
+                          {xpSourceData.strategic_task} XP
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-md border border-white/10 bg-[#14161c] p-4">
+                        <span className="text-sm font-medium text-zinc-300">
+                          Manual Adjustments
+                        </span>
+                        <span className="text-lg font-semibold text-[#39ff88]">
+                          {xpSourceData.manual_adjustment} XP
+                        </span>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
