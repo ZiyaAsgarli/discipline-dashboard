@@ -130,7 +130,20 @@ Row Level Security was chosen to support secure multi-user architecture. Each us
 
 The project was developed incrementally: first the UI foundation, then schema planning, then authentication, then core data flows, then analytics and task controls. This reduced complexity and made each layer easier to test.
 
-## 12. Challenges and Solutions
+## 13. Product UX Improvements (Mobile-First Design)
+
+While the initial dashboard was highly functional, it became clear that the UI was too long and heavy on mobile devices. Too many large sections created unnecessary scrolling, and the primary "Complete Today" action was buried underneath heavy statistics and grid views.
+
+To solve this, the dashboard underwent a strict mobile-first premium UX redesign:
+- **Mobile-first Layout Priority**: The entire visual hierarchy was restructured to prioritize action over analysis on small screens.
+- **Today Execution Card**: A polished new card was created to house the level progress and the Complete Today button, making it the immediate focal point upon opening the app.
+- **Compressed Interfaces**: Stats, headers, and the database connection status were shrunk into compact pills and grids to save vertical space.
+- **Compact Progress Map**: The 180-day grid was tightened significantly so it maps the journey visually without dominating the page height.
+- **Secondary Analytics**: The BI analytics charts and summaries were made visually lighter and grouped lower down to support the experience rather than overwhelm it.
+
+This redesign provided massive product value: it transformed the dashboard from a desktop web tool into a motivating, effortless, and premium daily habit tracker. This aligns the project strongly with real-world SaaS and product UX thinking, delivering a much more polished portfolio presentation.
+
+## 14. Challenges and Solutions
 
 Email confirmation during development can affect the auth flow. The solution is to handle loading and error states clearly and configure Supabase Auth settings appropriately during local testing.
 
@@ -148,9 +161,8 @@ RLS required careful insert policies so authenticated users can create only thei
 - Better task editing
 - Streak tracking
 - Public portfolio landing page
-- Mobile optimization
 - Optional backend jobs on Render.com
 
-## 14. Interview Summary
+## 15. Interview Summary
 
-In an interview, this project can be presented as a full-stack career analytics dashboard that combines product thinking, database design, authentication, security, and analytics. It demonstrates the ability to design a user-focused system, build secure data flows with Supabase and RLS, and translate personal productivity data into measurable BI-style metrics.
+In an interview, this project can be presented as a full-stack career analytics dashboard that combines product thinking, database design, authentication, security, and analytics. It demonstrates the ability to design a user-focused system, build secure data flows with Supabase and RLS, and translate personal productivity data into measurable BI-style metrics. It also showcases a strong emphasis on mobile-first UX and premium product design.

@@ -83,7 +83,9 @@ Discipline Dashboard is designed as both a personal operating system and a profe
 
 - Email/password authentication
 - User profile system
-- 180-Day Discipline Grid
+- Mobile-first premium UX layout
+- Today Execution Card
+- Compact 180-day progress map
 - Daily Complete Today check-in
 - XP rewards
 - RPG level system
@@ -99,6 +101,17 @@ Discipline Dashboard is designed as both a personal operating system and a profe
 - Monthly Analytics Overview
 - BI-style analytics using Supabase-backed data
 - User-specific Row Level Security
+
+## Mobile-First UX Polish
+
+The dashboard features a heavily optimized, premium mobile-first redesign that turns the web app into an effortless, app-like habit tracker. Key improvements include:
+
+- A compact mobile header and database status pill to save vertical space.
+- The **Today Execution Card**, which brings your level, XP, and main "Complete Today" action to the very top.
+- A highly compact 180-day progress map that doesn't overwhelm small screens.
+- A mobile-friendly Strategic Tasks Manager with wrap-friendly chip filters.
+- Visually lighter, secondary analytics sections to prioritize action over data-scrolling.
+- Improved visual hierarchy and reduced meaningless scrolling, resulting in a dark, satisfying RPG productivity app feel.
 
 ## Code Architecture
 
