@@ -28,7 +28,8 @@ export const translations = {
         "XP Audit Trail",
         "Weekly/Monthly Analytics",
         "Streak Tracking",
-        "PWA Install Support"
+        "PWA Install Support",
+        "Power BI-ready CSV Export"
       ],
       techStack: "Technical Stack",
       techStackDesc: "Built for speed, secure state management, and an app-like feel.",
@@ -44,7 +45,8 @@ export const translations = {
         "Completion rate & streak tracking",
         "XP by source distribution",
         "Weekly execution analytics",
-        "Monthly historical overview"
+        "Monthly historical overview",
+        "Power BI-ready CSV data export"
       ],
       mobileVal: "Mobile & PWA Experience",
       mobileDesc: "A heavily optimized, mobile-first design turns this web app into a polished, installable habit tracker.",
@@ -96,7 +98,14 @@ export const translations = {
       currentStreak: "Current Streak",
       longestStreak: "Longest Streak",
       dailyCheckins: "Daily Check-ins",
-      manualAdjustments: "Manual Adjustments"
+      manualAdjustments: "Manual Adjustments",
+      reportsExport: "Reports & Export",
+      reportsExportDesc: "Export your discipline and career tracking data for Excel, Power BI, or analysis.",
+      exportCheckins: "Export Daily Check-ins",
+      exportXpEvents: "Export XP Events",
+      exportTasks: "Export Strategic Tasks",
+      exportFullReport: "Export Full Report",
+      reportsExportNote: "CSV export is generated locally from your authenticated data."
     }
   },
   az: {
@@ -126,7 +135,8 @@ export const translations = {
         "XP Audit İzləyicisi",
         "Həftəlik/Aylıq Analitika",
         "Seriya (Streak) İzləmə",
-        "PWA Quraşdırma Dəstəyi"
+        "PWA Quraşdırma Dəstəyi",
+        "Power BI-uyğun CSV Export"
       ],
       techStack: "Texnoloji Stek",
       techStackDesc: "Sürət, təhlükəsiz vəziyyət idarəetməsi və mobil tətbiq hissi üçün qurulub.",
@@ -142,7 +152,8 @@ export const translations = {
         "Tamamlanma dərəcəsi və seriya izləmə",
         "Mənbəyə görə XP paylanması",
         "Həftəlik icra analitikası",
-        "Aylıq tarixi xülasə"
+        "Aylıq tarixi xülasə",
+        "Power BI-uyğun CSV data export"
       ],
       mobileVal: "Mobil və PWA Təcrübəsi",
       mobileDesc: "Güclü optimallaşdırılmış mobil-öncəli dizayn bu veb tətbiqi quraşdırıla bilən vərdiş izləyicisinə çevirir.",
@@ -194,7 +205,14 @@ export const translations = {
       currentStreak: "Cari Seriya",
       longestStreak: "Ən Uzun Seriya",
       dailyCheckins: "Gündəlik Qeydiyyatlar",
-      manualAdjustments: "Əl ilə Düzəlişlər"
+      manualAdjustments: "Əl ilə Düzəlişlər",
+      reportsExport: "Hesabatlar və Export",
+      reportsExportDesc: "İntizam və karyera izləmə datanı Excel, Power BI və analiz üçün export et.",
+      exportCheckins: "Günlük Yoxlamaları Export et",
+      exportXpEvents: "XP Hadisələrini Export et",
+      exportTasks: "Strateji Tapşırıqları Export et",
+      exportFullReport: "Tam Hesabatı Export et",
+      reportsExportNote: "CSV export yalnız sənin giriş etdiyin data əsasında lokal yaradılır."
     }
   }
 };

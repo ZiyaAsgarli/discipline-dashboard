@@ -27,6 +27,7 @@ import { XpBySource } from "@/components/XpBySource";
 import { WeeklyCompletionAnalytics } from "@/components/WeeklyCompletionAnalytics";
 import { MonthlyAnalyticsOverview } from "@/components/MonthlyAnalyticsOverview";
 import { StrategicTasksManager } from "@/components/StrategicTasksManager";
+import { ReportsExport } from "@/components/ReportsExport";
 import {
   getLevelTitle,
   getCurrentLevelXp,
@@ -1573,6 +1574,24 @@ export default function Home() {
               xpSourceData={xpSourceData}
               xpSourceLoading={xpSourceLoading}
               xpSourceError={xpSourceError}
+              t={t.app}
+            />
+
+            <ReportsExport
+              profile={profile}
+              dailyCheckins={dailyCheckins}
+              xpEvents={xpEvents}
+              xpEventsCount={xpEventsCount}
+              strategicTasks={strategicTasks}
+              analytics={{
+                currentStreak,
+                longestStreak,
+                completionRate,
+                monthlyCompletedDays,
+                monthlyCompletionRate,
+                monthlyXpEarned,
+                monthlyTasksCompleted,
+              }}
               t={t.app}
             />
           </aside>

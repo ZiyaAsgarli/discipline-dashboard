@@ -104,6 +104,18 @@ The dashboard includes an analytics summary layer with:
 
 These features support the project’s Data Analytics / BI portfolio value because they demonstrate event tracking, advanced metric calculation, dashboard design, and user-specific reporting. The analytics are seamlessly derived from relational tables including `daily_checkins`, `xp_events`, and `strategic_tasks`. The data model can later be extended into deeper trend analysis and external reporting tools such as Power BI.
 
+### Reports & Export Layer
+
+The dashboard includes a Power BI-ready data export layer that allows users to export their own authenticated data as CSV files. This strengthens the project’s Data Analytics / BI portfolio value by demonstrating real-world data export workflows.
+
+Available exports:
+- **Daily Check-ins CSV**: Campaign day completion history
+- **XP Events CSV**: Full XP audit trail with source types and timestamps
+- **Strategic Tasks CSV**: Task details with priority, status, and XP rewards
+- **Full Dashboard Report CSV**: Flattened analytics summary including level, XP, streaks, completion rates, and monthly metrics
+
+All exports are generated client-side from user-specific authenticated data. No service role keys or public endpoints are exposed. CSV files include UTF-8 BOM headers for seamless Excel and Power BI compatibility.
+
 ## 10. Product Features Implemented
 
 - Email/password auth
@@ -181,9 +193,7 @@ RLS required careful insert policies so authenticated users can create only thei
 
 ## 16. Future Roadmap
 
-- Power BI export/reporting layer
-- Better task editing
-- Streak tracking
+- Better charts
 - Public portfolio landing page
 - Optional backend jobs on Render.com
 

@@ -117,6 +117,7 @@ Discipline Dashboard is designed as both a personal operating system and a profe
 - Weekly Completion Analytics
 - Monthly Analytics Overview
 - BI-style analytics using Supabase-backed data
+- Power BI-ready CSV data export
 - User-specific Row Level Security
 - PWA / Installable App Support
 - Azerbaijani / English Language Switcher
@@ -170,6 +171,7 @@ Important components include:
 - `WeeklyCompletionAnalytics`
 - `MonthlyAnalyticsOverview`
 - `AnalyticsSummary`
+- `ReportsExport`
 
 ## Database Tables
 
@@ -238,7 +240,6 @@ http://localhost:3000
 
 ## Future Roadmap
 
-- Task edit/delete/archive
 - Better charts
-- Power BI export or reporting layer
 - Public portfolio case study page
+- Optional future backend jobs on Render.com
