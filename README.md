@@ -1,245 +1,51 @@
-# Discipline Dashboard — RPG-Based Career & Discipline Tracking System
+# Discipline Dashboard
 
-A full-stack personal operating system for tracking daily discipline, strategic career goals, XP progression, and analytics-backed growth.
+A bilingual personal operating system for tracking daily execution, long-term goals, and measurable progress. The application combines a 180-day discipline grid, XP progression, strategic tasks, analytics, and reporting in a responsive installable PWA.
 
-![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
-![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
-![Portfolio Project](https://img.shields.io/badge/Portfolio_Project-22C55E?style=for-the-badge)
+## Product capabilities
 
-## Live Demo
+- Email-and-password authentication with protected dashboard routes.
+- Daily check-ins, streak-oriented execution tracking, XP events, and RPG-style levels.
+- Strategic task planning with categories, priorities, deadlines, and completion history.
+- Weekly and monthly analytics, source-level XP reporting, and recent activity views.
+- CSV export designed for spreadsheet analysis and Power BI workflows.
+- Azerbaijani and English interface support.
 
-Live Demo: [\[Add Vercel URL here\]](https://discipline-dashboard-iota.vercel.app/)
+## Architecture
 
-GitHub: [\[Add GitHub repository URL here\]](https://github.com/ZiyaAsgarli/discipline-dashboard)
+- **Frontend:** Next.js, React, TypeScript, Tailwind CSS, and Recharts.
+- **Backend and data:** Supabase Auth and PostgreSQL.
+- **Authorization:** user-scoped tables protected by PostgreSQL Row-Level Security policies.
+- **Application model:** server-backed dashboard state with an XP ledger and auditable task activity.
+- **Delivery:** installable PWA assets and Vercel-oriented deployment configuration.
 
-## Quick Links
+## Documentation
 
-This repository is structured not only as a working application, but also as a portfolio-ready engineering case study.
+- [Engineering case study](./CASE_STUDY.md)
+- [Database plan](./DATABASE_PLAN.md)
+- [SQL schema](./supabase/schema.sql)
+- [Row-Level Security policies](./supabase/rls_policies.sql)
+- [Interview demo script](./DEMO_SCRIPT.md)
 
-- [Engineering Case Study](./CASE_STUDY.md)
-- [Interview Demo Script](./DEMO_SCRIPT.md)
-- [Database Plan](./DATABASE_PLAN.md)
-- [SQL Schema](./supabase/schema.sql)
-- [RLS Policies](./supabase/rls_policies.sql)
+## Local development
 
-## Project Highlights
-
-- Secure user-specific authentication
-- 180-day discipline grid
-- RPG XP and level system
-- Strategic task management
-- XP audit trail
-- Analytics summary cards
-- Free-tier deployment architecture
-
-## v1.0 MVP Release Checklist
-
-This release represents the first stable full-stack MVP version of the Discipline Dashboard.
-
-- [x] Next.js frontend implemented
-- [x] Supabase Auth configured
-- [x] PostgreSQL schema created
-- [x] Row Level Security policies added
-- [x] User profile creation works
-- [x] 180-Day Discipline Grid connected to real data
-- [x] Daily check-in flow works
-- [x] XP reward system works
-- [x] RPG level progress works
-- [x] Dynamic level titles work
-- [x] Strategic Tasks Manager works
-- [x] Task pause/resume/archive/delete works
-- [x] Task completion rewards XP
-- [x] XP event audit trail works
-- [x] Recent XP Activity feed works
-- [x] Analytics Summary cards work
-- [x] GitHub repository created
-- [x] Vercel deployment completed
-- [x] Environment variables configured securely
-
-## v1.1 Mobile/PWA Release
-
-This release focuses on transforming the application into a true mobile app experience:
-
-- Mobile-first premium UX redesign
-- Compact habit-tracker style layout
-- Today Execution Card
-- Compact KPI cards
-- Compact 180-day progress map
-- Improved Strategic Tasks Manager mobile usability
-- Lighter analytics sections
-- PWA install support
-- Custom branded app icon
-- Standalone mobile app-like experience
-
-*v1.1 turns the project from a desktop-style dashboard into a mobile-friendly personal operating system that can be installed and used like a real productivity app.*
-
-## Why This Project Exists
-
-Discipline Dashboard is designed as both a personal operating system and a professional portfolio project.
-
-- Personal discipline system for tracking consistency over a 180-day campaign
-- Career transition support into Data Analytics / BI
-- Full-stack portfolio project for corporate interviews
-
-## Tech Stack
-
-- Next.js
-- TypeScript
-- Tailwind CSS
-- Supabase Auth
-- Supabase PostgreSQL
-- Row Level Security
-- Vercel-ready frontend
-- Supabase free-tier backend/database
-
-## Core Features
-
-- Email/password authentication
-- User profile system
-- Mobile-first premium UX layout
-- Today Execution Card
-- Compact 180-day progress map
-- Daily Complete Today check-in
-- XP rewards
-- RPG level system
-- Dynamic level titles
-- Strategic Tasks Manager
-- Task completion with XP rewards
-- XP event audit trail
-- Recent XP Activity feed
-- Analytics Summary cards
-- Weekly XP Analytics
-- XP by Source analytics
-- Weekly Completion Analytics
-- Monthly Analytics Overview
-- BI-style analytics using Supabase-backed data
-- Power BI-ready CSV data export
-- User-specific Row Level Security
-- PWA / Installable App Support
-- Azerbaijani / English Language Switcher
-
-## Mobile-First UX Polish
-
-The dashboard features a heavily optimized, premium mobile-first redesign that turns the web app into an effortless, app-like habit tracker. Key improvements include:
-
-- A compact mobile header and database status pill to save vertical space.
-- The **Today Execution Card**, which brings your level, XP, and main "Complete Today" action to the very top.
-- A highly compact 180-day progress map that doesn't overwhelm small screens.
-- A mobile-friendly Strategic Tasks Manager with wrap-friendly chip filters.
-- Visually lighter, secondary analytics sections to prioritize action over data-scrolling.
-- Improved visual hierarchy and reduced meaningless scrolling, resulting in a dark, satisfying RPG productivity app feel.
-
-## PWA / Installable App Support
-
-The application is configured as a Progressive Web App (PWA). It can be directly installed on mobile devices (via "Add to Home Screen" or "Install App" browser actions) to provide a true native-app feel.
-- **Web App Manifest**: Automatically provides app metadata.
-- **Custom Premium App Icon**: Includes a full suite of custom-designed icons (dark background with neon green brand styling) optimized for Android and iOS home screens.
-- **Standalone Display Mode**: Opens without a browser URL bar to fully immerse the user in a standalone app-like launch experience.
-- **Mobile-First Experience**: Combined with the mobile UX polish, this transforms the dashboard into an installable daily habit tracker.
-
-## Azerbaijani / English Language Switcher
-
-The dashboard includes a lightweight frontend-only EN/AZ language switcher. Users can choose Azerbaijani or English, and the selected language is persisted locally for future sessions using `localStorage`. Both the public landing page and the authenticated dashboard support translated UI labels. This improves accessibility and usability, ensuring the product can be used comfortably by both Azerbaijani and English-speaking users.
-
-## Code Architecture
-
-The frontend follows a container-presentational pattern. The `app/page.tsx` file acts as the main container responsible for:
-
-- Supabase data fetching
-- State management
-- Auth handlers
-- XP, check-in, and task handlers
-- Analytics calculations
-
-Reusable presentational UI is split into modular components inside the `components/` directory. Shared TypeScript interfaces are centralized in `components/types.ts`.
-
-Important components include:
-
-- `AuthPanel`
-- `DashboardHeader`
-- `StatCards`
-- `DisciplineGrid`
-- `RpgProgress`
-- `StrategicTasksManager`
-- `RecentXpActivity`
-- `WeeklyXpAnalytics`
-- `XpBySource`
-- `WeeklyCompletionAnalytics`
-- `MonthlyAnalyticsOverview`
-- `AnalyticsSummary`
-- `ReportsExport`
-
-## Database Tables
-
-The planned Supabase PostgreSQL schema uses these core tables:
-
-- `profiles`
-- `daily_checkins`
-- `xp_events`
-- `strategic_tasks`
-
-## XP Logic
-
-- Daily check-in = `100 XP`
-- Strategic task XP reward is configurable
-- Level formula:
-
-```text
-Level = floor(total_xp / 1000) + 1
-```
-
-## Local Setup
-
-Install dependencies:
+Create `.env.local` from the included example and provide your Supabase project values:
 
 ```bash
+cp .env.local.example .env.local
 npm install
-```
-
-Create a local environment file:
-
-```bash
-.env.local
-```
-
-Add Supabase environment variables:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-```
-
-## Environment Variables
-
-Required local environment variables:
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-
-Run the development server:
-
-```bash
 npm run dev
 ```
 
-Open the app:
+Then open `http://localhost:3000`.
 
-```text
-http://localhost:3000
+## Quality checks
+
+```bash
+npm run lint
+npm run build
 ```
 
-## Deployment Plan
+## Deployment status
 
-- Frontend: Vercel
-- Database/Auth: Supabase
-- Optional future backend: Render.com
-
-## Future Roadmap
-
-- Better charts
-- Public portfolio case study page
-- Optional future backend jobs on Render.com
+The repository's previously configured public deployment currently returns `404`. Restore or replace the deployment before publishing a live-demo link.
